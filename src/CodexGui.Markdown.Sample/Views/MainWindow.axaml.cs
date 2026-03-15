@@ -703,6 +703,106 @@ public partial class MainWindow : Window
             MermaidMarkdownPlugin ..> MarkdownRenderController : extends pipeline
         ```
 
+        ## Mermaid ER diagram
+
+        ```mermaid
+        erDiagram
+            CUSTOMER ||--o{ ORDER : places
+            ORDER ||--|{ ORDER_ITEM : contains
+            PRODUCT ||--o{ ORDER_ITEM : appears_in
+
+            CUSTOMER {
+                string id PK
+                string email UK
+            }
+
+            ORDER {
+                string id PK
+                date created_at
+                string status
+            }
+
+            PRODUCT {
+                string sku PK
+                string display_name
+            }
+        ```
+
+        ## Mermaid pie chart
+
+        ```mermaid
+        pie showData
+            title Native Mermaid coverage
+            "Core diagrams" : 4
+            "New native diagrams" : 6
+            "Markdown editors" : 2
+        ```
+
+        ## Mermaid user journey
+
+        ```mermaid
+        journey
+            title Preview editing workflow
+            section Compose
+              Write markdown: 5: User
+              Insert diagram block: 4: User, Editor
+            section Review
+              Regenerate preview: 5: Parser, Preview
+              Apply inline edit: 4: User, Preview
+        ```
+
+        ## Mermaid timeline
+
+        ```mermaid
+        timeline
+            title Mermaid native renderer milestones
+            section Existing support
+              Initial rollout : Flowchart : Sequence
+              Native states : State diagram
+              Native relationships : Class diagram
+            section Current parity work
+              Parser preprocessing : Directives : Frontmatter
+              Diagram expansion : ER : Pie : Journey : Timeline : Quadrant : Mindmap
+        ```
+
+        ## Mermaid quadrant chart
+
+        ```mermaid
+        quadrantChart
+            title Mermaid implementation priorities
+            x-axis Low impact --> High impact
+            y-axis Low effort --> High effort
+            quadrant-1 Ship next
+            quadrant-2 Prototype
+            quadrant-3 Skip
+            quadrant-4 Plan carefully
+            Parser preprocessing: [0.78, 0.82]
+            Pie chart: [0.72, 0.70]
+            Gantt chart: [0.66, 0.24]
+            Mind map: [0.58, 0.64]
+        ```
+
+        ## Mermaid mind map
+
+        ```mermaid
+        mindmap
+            Mermaid
+                Native parser
+                    Flowchart
+                    Sequence
+                    State
+                    Class
+                    ER
+                    Pie
+                    Journey
+                    Timeline
+                    Quadrant
+                    Mind map
+                Preview editor
+                    Live updates
+                    Inline editing
+        ```
+
         ## Code fence
 
         ```csharp
@@ -724,7 +824,7 @@ public partial class MainWindow : Window
         | :-------------- | :----: | ----: |
         | Preview surface | Ready  | Rich blocks stay constrained to the available width. |
         | Table layout    | Ready  | Alignment follows markdown while cell content wraps cleanly. |
-        | Mermaid plugin  | Ready  | Flowchart, sequence, state, and class diagrams render natively. |
+        | Mermaid plugin  | Ready  | Flowchart, sequence, state, class, ER, pie, journey, timeline, quadrant, and mind map diagrams render natively. |
         | Code fences     | Ready  | TextMate grammars are used before the built-in highlighter fallback. |
         """;
 }
