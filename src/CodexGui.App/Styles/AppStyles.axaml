@@ -117,6 +117,11 @@
         <Setter Property="Padding" Value="10,6" />
     </Style>
 
+    <Style Selector="Button.topBarActionButton">
+        <Setter Property="Margin" Value="0,0,6,6" />
+        <Setter Property="Padding" Value="9,5" />
+    </Style>
+
     <Style Selector="ToggleButton.panelToggle">
         <Setter Property="Background" Value="{DynamicResource ControlSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
@@ -135,6 +140,11 @@
     <Style Selector="ToggleButton.panelToggle:checked">
         <Setter Property="Background" Value="{DynamicResource SelectionSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SelectionBorderBrush}" />
+    </Style>
+
+    <Style Selector="ToggleButton.topBarActionToggle">
+        <Setter Property="Margin" Value="0,0,6,6" />
+        <Setter Property="Padding" Value="9,5" />
     </Style>
 
     <Style Selector="Button.primaryButton">
@@ -203,12 +213,33 @@
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}" />
     </Style>
 
-    <Style Selector="Border.threadConnectionCard">
+    <Style Selector="Border.railFlyoutCard">
         <Setter Property="Background" Value="{DynamicResource PanelMutedBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="10" />
+    </Style>
+
+    <Style Selector="Border.topBarCard">
+        <Setter Property="Background" Value="{DynamicResource ControlSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="12,10" />
+    </Style>
+
+    <Style Selector="Border.topBarOverviewCard">
+        <Setter Property="Background" Value="{DynamicResource PanelMutedBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
+    </Style>
+
+    <Style Selector="Border.topBarInlineBadge">
+        <Setter Property="Background" Value="{DynamicResource SelectionSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SelectionBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="Padding" Value="8,4" />
     </Style>
 
     <Style Selector="shell|ShellWorkspaceSidebarView ListBox#ThreadList">
@@ -346,6 +377,17 @@
     <Style Selector="TextBlock.panelTitle">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="TextBlock.topBarHeadline">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="TextBlock.topBarInlineBadgeText">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     </Style>
 
     <Style Selector="TextBlock.sectionLabel">

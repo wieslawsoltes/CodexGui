@@ -19,14 +19,128 @@
                         Spacing="6"
                         Margin="0,8,0,0">
                 <Button Classes="railButton"
-                        ToolTip.Tip="New thread"
-                        Command="{Binding NewThreadCommand}">
+                        ToolTip.Tip="Thread actions">
+                    <Button.Flyout>
+                        <Flyout Placement="RightEdgeAlignedTop">
+                            <Border Classes="railFlyoutCard"
+                                    Width="332">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
+                                        <TextBlock Text="Thread actions"
+                                                   Classes="panelTitle" />
+                                        <Border Grid.Column="1"
+                                                Classes="topBarInlineBadge"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding ThreadCountLabel}"
+                                                       Classes="topBarInlineBadgeText" />
+                                        </Border>
+                                    </Grid>
+
+                                    <WrapPanel Orientation="Horizontal">
+                                        <Button Classes="primaryButton topBarActionButton"
+                                                Command="{Binding NewThreadCommand}">
+                                            <StackPanel Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <ic:SymbolIcon Classes="buttonIcon"
+                                                               Symbol="ChatAdd" />
+                                                <TextBlock Text="New thread" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding StartReviewCommand}">
+                                            <TextBlock Text="Review" />
+                                        </Button>
+                                        <ToggleButton Classes="panelToggle topBarActionToggle"
+                                                      Content="Auto-scroll"
+                                                      IsChecked="{Binding AutoScrollMessages, Mode=TwoWay}" />
+                                    </WrapPanel>
+
+                                    <WrapPanel Orientation="Horizontal">
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding ForkThreadCommand}">
+                                            <TextBlock Text="Fork" />
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding ArchiveThreadCommand}">
+                                            <TextBlock Text="Archive" />
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding UnarchiveThreadCommand}">
+                                            <TextBlock Text="Unarchive" />
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding RenameThreadCommand}">
+                                            <TextBlock Text="Rename" />
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding CompactThreadCommand}">
+                                            <TextBlock Text="Compact" />
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding RollbackThreadCommand}">
+                                            <TextBlock Text="Rollback" />
+                                        </Button>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
                     <ic:SymbolIcon Classes="buttonIcon"
                                    Symbol="ChatAdd" />
                 </Button>
                 <Button Classes="railButton"
-                        ToolTip.Tip="Threads"
-                        Command="{Binding ShowThreadsCommand}">
+                        ToolTip.Tip="Workspace controls">
+                    <Button.Flyout>
+                        <Flyout Placement="RightEdgeAlignedTop">
+                            <Border Classes="railFlyoutCard"
+                                    Width="300">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="Workspace"
+                                               Classes="panelTitle" />
+
+                                    <WrapPanel Orientation="Horizontal">
+                                        <ToggleButton Classes="panelToggle topBarActionToggle"
+                                                      Content="Rail"
+                                                      IsChecked="{Binding ShowNavigationRail, Mode=TwoWay}" />
+                                        <ToggleButton Classes="panelToggle topBarActionToggle"
+                                                      Content="Sidebar"
+                                                      IsChecked="{Binding ShowWorkspacePanel, Mode=TwoWay}" />
+                                    </WrapPanel>
+
+                                    <WrapPanel Orientation="Horizontal">
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding ShowThreadsCommand}">
+                                            <StackPanel Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <ic:SymbolIcon Classes="buttonIcon"
+                                                               Symbol="PanelLeft" />
+                                                <TextBlock Text="Threads" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding ShowAppsCommand}">
+                                            <StackPanel Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <ic:SymbolIcon Classes="buttonIcon"
+                                                               Symbol="AppsSettings" />
+                                                <TextBlock Text="Apps" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding ShowSettingsCommand}">
+                                            <StackPanel Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <ic:SymbolIcon Classes="buttonIcon"
+                                                               Symbol="SettingsChat" />
+                                                <TextBlock Text="Settings" />
+                                            </StackPanel>
+                                        </Button>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
                     <ic:SymbolIcon Classes="buttonIcon"
                                    Symbol="PanelLeft" />
                 </Button>
@@ -49,14 +163,23 @@
                         Spacing="8"
                         Margin="0,0,0,12">
                 <Button Classes="railButton"
-                        ToolTip.Tip="App-server connection">
+                        ToolTip.Tip="Session and connection">
                     <Button.Flyout>
                         <Flyout Placement="RightEdgeAlignedTop">
-                            <Border Classes="threadConnectionCard"
-                                    Width="360">
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="App-server connection"
-                                               Classes="panelTitle" />
+                            <Border Classes="railFlyoutCard"
+                                     Width="360">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
+                                        <TextBlock Text="Session"
+                                                   Classes="panelTitle" />
+                                        <Border Grid.Column="1"
+                                                Classes="topBarInlineBadge"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding ConnectionState}"
+                                                       Classes="topBarInlineBadgeText" />
+                                        </Border>
+                                    </Grid>
                                     <TextBlock Text="{Binding ConnectionDetail}"
                                                Classes="mutedText"
                                                TextWrapping="Wrap" />
@@ -79,7 +202,16 @@
                                                  Text="{Binding WorkingDirectory}" />
                                     </StackPanel>
                                     <WrapPanel Orientation="Horizontal">
-                                        <Button Classes="toolbarButton"
+                                        <Button Classes="primaryButton topBarActionButton"
+                                                Command="{Binding ConnectCommand}">
+                                            <StackPanel Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <ic:SymbolIcon Classes="buttonIcon"
+                                                               Symbol="PlugConnectedCheckmark" />
+                                                <TextBlock Text="Connect" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
                                                 Command="{Binding DisconnectCommand}">
                                             <StackPanel Orientation="Horizontal"
                                                         Spacing="6">
@@ -88,14 +220,38 @@
                                                 <TextBlock Text="Disconnect" />
                                             </StackPanel>
                                         </Button>
-                                        <Button Classes="primaryButton"
-                                                Command="{Binding ConnectCommand}">
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding RefreshCommand}">
                                             <StackPanel Orientation="Horizontal"
                                                         Spacing="6">
                                                 <ic:SymbolIcon Classes="buttonIcon"
-                                                               Symbol="PlugConnectedCheckmark" />
-                                                <TextBlock Text="Connect" />
+                                                               Symbol="ArrowSync" />
+                                                <TextBlock Text="Refresh" />
                                             </StackPanel>
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding ReloadMcpServersCommand}">
+                                            <StackPanel Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <ic:SymbolIcon Classes="buttonIcon"
+                                                               Symbol="ArrowSync" />
+                                                <TextBlock Text="Reload MCP" />
+                                            </StackPanel>
+                                        </Button>
+                                    </WrapPanel>
+                                    <WrapPanel Orientation="Horizontal">
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding LoginCommand}">
+                                            <TextBlock Text="Login" />
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding CancelLoginCommand}"
+                                                IsVisible="{Binding HasActiveLogin}">
+                                            <TextBlock Text="Cancel login" />
+                                        </Button>
+                                        <Button Classes="toolbarButton topBarActionButton"
+                                                Command="{Binding LogoutCommand}">
+                                            <TextBlock Text="Logout" />
                                         </Button>
                                     </WrapPanel>
                                 </StackPanel>
