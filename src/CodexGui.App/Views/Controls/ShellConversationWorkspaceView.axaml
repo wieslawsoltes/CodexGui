@@ -1,0 +1,284 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CodexGui.App.ViewModels"
+             xmlns:md="using:CodexGui.Markdown.Controls"
+             xmlns:ic="using:FluentIcons.Avalonia"
+             x:Class="CodexGui.App.Views.Controls.ShellConversationWorkspaceView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border x:Name="Root">
+        <Grid RowDefinitions="*,Auto,Auto"
+              RowSpacing="8">
+            <DataGrid Grid.Row="0"
+                      x:Name="ConversationList"
+                      ItemsSource="{Binding ConversationItems}"
+                      SelectedItem="{Binding SelectedConversationItem, Mode=TwoWay}"
+                      AutoGenerateColumns="False"
+                      HeadersVisibility="None"
+                      GridLinesVisibility="None"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      IsReadOnly="True"
+                      UseLogicalScrollable="True"
+                      CanUserSortColumns="False"
+                      CanUserResizeColumns="False"
+                      CanUserReorderColumns="False"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="vm:ConversationItemViewModel">
+                                <Border Classes="conversationBubble">
+                                    <Grid ColumnDefinitions="82,*"
+                                          ColumnSpacing="12">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="{Binding Role}"
+                                                       Classes="sectionLabel" />
+                                            <TextBlock Text="{Binding Meta}"
+                                                       Classes="mutedText"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1"
+                                                    Spacing="6">
+                                            <Grid ColumnDefinitions="*,Auto"
+                                                  ColumnSpacing="8">
+                                                <TextBlock Text="{Binding Title}"
+                                                           Classes="threadTitle"
+                                                           Foreground="{Binding ForegroundBrush}" />
+                                                <Border Grid.Column="1"
+                                                        Classes="statusChip"
+                                                        IsVisible="{Binding HasBadge}">
+                                                    <TextBlock Text="{Binding Badge}" Classes="chipValue" />
+                                                </Border>
+                                            </Grid>
+
+                                            <md:MarkdownTextBlock Markdown="{Binding Body}"
+                                                                 Classes="markdownBody"
+                                                                 Foreground="{Binding ForegroundBrush}"
+                                                                 TextWrapping="Wrap" />
+
+                                            <StackPanel Spacing="4"
+                                                        IsVisible="{Binding HasCodePreview}">
+                                                <TextBlock Text="{Binding CodePreviewLabel}" Classes="sectionLabel" />
+                                                <Border Classes="previewCodeBlock">
+                                                    <TextBlock Text="{Binding CodePreview}" Classes="codeBlockText" />
+                                                </Border>
+                                            </StackPanel>
+
+                                            <StackPanel Spacing="4"
+                                                        IsVisible="{Binding HasOutputPreview}">
+                                                <TextBlock Text="{Binding OutputPreviewLabel}" Classes="sectionLabel" />
+                                                <Border Classes="previewCodeBlock">
+                                                    <TextBlock Text="{Binding OutputPreview}" Classes="codeBlockText" />
+                                                </Border>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Border Grid.Row="1"
+                    Classes="approvalPanel"
+                    IsVisible="{Binding HasPendingRequests}">
+                <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="10">
+                        <TextBlock Text="Pending approvals" Classes="panelTitle" />
+                        <TextBlock Grid.Column="1" Text="{Binding PendingRequestCountLabel}" Classes="bodyText" />
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding PendingRequests}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PendingInteractionViewModel">
+                                <Border Classes="approvalCard">
+                                    <StackPanel Spacing="10">
+                                        <Grid ColumnDefinitions="*,Auto"
+                                              ColumnSpacing="10">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{Binding Title}" Classes="threadTitle" />
+                                                <TextBlock Text="{Binding Meta}" Classes="mutedText" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1"
+                                                    Classes="statusChip"
+                                                    IsVisible="{Binding HasBadge}">
+                                                <TextBlock Text="{Binding Badge}" Classes="chipValue" />
+                                            </Border>
+                                        </Grid>
+
+                                        <TextBlock Text="{Binding Detail}"
+                                                   TextWrapping="Wrap" />
+
+                                        <Border Classes="previewCodeBlock"
+                                                IsVisible="{Binding HasCommandPreview}">
+                                            <TextBlock Text="{Binding CommandPreview}" Classes="codeBlockText" />
+                                        </Border>
+
+                                        <ItemsControl ItemsSource="{Binding Questions}"
+                                                      IsVisible="{Binding HasQuestions}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:PendingInteractionQuestionViewModel">
+                                                    <Border Classes="approvalQuestion">
+                                                        <StackPanel Spacing="8">
+                                                            <TextBlock Text="{Binding Header}" Classes="sectionLabel" />
+                                                            <TextBlock Text="{Binding Question}" TextWrapping="Wrap" />
+                                                            <ItemsControl ItemsSource="{Binding Options}"
+                                                                          IsVisible="{Binding HasOptions}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <WrapPanel Orientation="Horizontal" />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate x:DataType="vm:PendingInteractionOptionViewModel">
+                                                                        <Button Classes="secondaryButton"
+                                                                                Content="{Binding Label}"
+                                                                                Command="{Binding SelectCommand}" />
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <TextBox Classes="commandField"
+                                                                     Text="{Binding AnswerText}"
+                                                                     Watermark="Type your answer" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <StackPanel Spacing="8"
+                                                    IsVisible="{Binding HasToolResponseBox}">
+                                            <TextBlock Text="Return tool output" Classes="sectionLabel" />
+                                            <TextBox Classes="composerInput"
+                                                     Text="{Binding ResponseText}"
+                                                     Watermark="{Binding ResponsePlaceholder}"
+                                                     AcceptsReturn="True" />
+                                        </StackPanel>
+
+                                        <WrapPanel Orientation="Horizontal">
+                                            <Button Classes="primaryButton"
+                                                    Content="Accept"
+                                                    Command="{Binding AcceptCommand}"
+                                                    IsVisible="{Binding HasApprovalButtons}" />
+                                            <Button Classes="secondaryButton"
+                                                    Content="Accept For Session"
+                                                    Command="{Binding AcceptForSessionCommand}"
+                                                    IsVisible="{Binding ShowAcceptForSession}" />
+                                            <Button Classes="secondaryButton"
+                                                    Content="Remember Rule"
+                                                    Command="{Binding ApplyExecPolicyCommand}"
+                                                    IsVisible="{Binding HasExecPolicyDecision}" />
+                                            <Button Classes="secondaryButton"
+                                                    Content="Remember Host"
+                                                    Command="{Binding ApplyNetworkPolicyCommand}"
+                                                    IsVisible="{Binding HasNetworkPolicyDecision}" />
+                                            <Button Classes="secondaryButton"
+                                                    Content="Decline"
+                                                    Command="{Binding DeclineCommand}"
+                                                    IsVisible="{Binding HasApprovalButtons}" />
+                                            <Button Classes="warningButton"
+                                                    Content="Cancel Turn"
+                                                    Command="{Binding CancelCommand}"
+                                                    IsVisible="{Binding HasApprovalButtons}" />
+                                            <Button Classes="primaryButton"
+                                                    Content="Submit Answers"
+                                                    Command="{Binding SubmitAnswersCommand}"
+                                                    IsVisible="{Binding HasQuestions}" />
+                                            <Button Classes="primaryButton"
+                                                    Content="{Binding SubmitSuccessButtonLabel}"
+                                                    Command="{Binding SubmitSuccessResultCommand}"
+                                                    IsVisible="{Binding HasToolResponseBox}" />
+                                            <Button Classes="secondaryButton"
+                                                    Content="{Binding SubmitFailureButtonLabel}"
+                                                    Command="{Binding SubmitFailureResultCommand}"
+                                                    IsVisible="{Binding HasToolFailureResult}" />
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2"
+                    Classes="composerSurface">
+                <Grid RowDefinitions="Auto,Auto,Auto"
+                      RowSpacing="10">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Ask for follow-up changes"
+                                   Classes="mutedText" />
+                        <TextBlock Text="{Binding ComposerHint}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding ConnectionDetail}"
+                                   Classes="mutedText"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <TextBox Grid.Row="1"
+                             Classes="composerInput"
+                             Text="{Binding DraftPrompt}"
+                             AcceptsReturn="True"
+                             Watermark="Ask for follow-up changes..." />
+
+                    <Grid Grid.Row="2"
+                          ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto"
+                          ColumnSpacing="8">
+                        <ComboBox Classes="pickerField"
+                                  ItemsSource="{Binding AvailableModels}"
+                                  SelectedItem="{Binding SelectedModel, Mode=TwoWay}" />
+                        <ComboBox Grid.Column="1"
+                                  Classes="pickerField"
+                                  ItemsSource="{Binding AvailableApprovalPolicies}"
+                                  SelectedItem="{Binding SelectedApprovalPolicy, Mode=TwoWay}" />
+                        <StackPanel Grid.Column="3"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Spacing="6">
+                            <Border Classes="statusChip"
+                                    BorderBrush="{Binding ConnectionBrush}">
+                                <TextBlock Text="{Binding ConnectionState}" Classes="chipValue" />
+                            </Border>
+                            <Border Classes="statusChip">
+                                <TextBlock Text="{Binding WorkingDirectoryName}" Classes="chipValue" />
+                            </Border>
+                        </StackPanel>
+                        <Button Grid.Column="4"
+                                Classes="toolbarButton"
+                                Command="{Binding InterruptTurnCommand}">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6">
+                                <ic:SymbolIcon Classes="buttonIcon"
+                                               Symbol="DismissCircle" />
+                                <TextBlock Text="Interrupt" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="5"
+                                Classes="toolbarButton"
+                                Command="{Binding SteerTurnCommand}">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6">
+                                <ic:SymbolIcon Classes="buttonIcon"
+                                               Symbol="ArrowReply" />
+                                <TextBlock Text="Steer" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="6"
+                                Classes="primaryButton"
+                                Command="{Binding SendTurnCommand}">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6">
+                                <ic:SymbolIcon Classes="buttonIcon"
+                                               Symbol="Send" />
+                                <TextBlock Text="Send" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

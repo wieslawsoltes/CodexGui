@@ -1,0 +1,42 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CodexGui.App.ViewModels"
+        xmlns:shell="using:CodexGui.App.Views.Controls"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        x:Class="CodexGui.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Codex GUI"
+        Width="1680"
+        Height="980"
+        MinWidth="760"
+        MinHeight="520"
+        Background="{DynamicResource AppWindowBrush}"
+        mc:Ignorable="d"
+        d:DesignWidth="1680"
+        d:DesignHeight="980">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid x:Name="ShellGrid"
+          ColumnDefinitions="64,286,*"
+          RowDefinitions="Auto,*">
+        <shell:ShellNavRailView x:Name="NavRailPanel"
+                                Grid.RowSpan="2"
+                                Grid.Column="0" />
+
+        <shell:ShellWorkspaceSidebarView x:Name="WorkspacePanel"
+                                         Grid.RowSpan="2"
+                                         Grid.Column="1" />
+
+        <shell:ShellTopBarView Grid.Column="2"
+                               Grid.Row="0" />
+
+        <shell:ShellConversationWorkspaceView x:Name="MainContentPanel"
+                                              Grid.Column="2"
+                                              Grid.Row="1" />
+
+    </Grid>
+</Window>

@@ -1,0 +1,23 @@
+{
+  "runtime": "Net90",
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "OpenApi/appserver-models.openapi.json",
+      "output": null
+    }
+  },
+  "codeGenerators": {
+    "openApiToCSharpClient": {
+      "generateClientClasses": false,
+      "generateClientInterfaces": false,
+      "generateDtoTypes": true,
+      "className": "Unused",
+      "namespace": "CodexGui.AppServer.Models",
+      "output": "Models/AppServerProtocolDtos.Generated.cs",
+      "jsonLibrary": "SystemTextJson",
+      "generateOptionalPropertiesAsNullable": true,
+      "typeAccessModifier": "public",
+      "anyType": "System.Text.Json.JsonElement"
+    }
+  }
+}

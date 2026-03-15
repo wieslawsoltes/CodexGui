@@ -1,0 +1,58 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Styles.Resources>
+        <Color x:Key="AppWindowColor">#F4F4F4</Color>
+        <Color x:Key="RailColor">#EAEAEA</Color>
+        <Color x:Key="SidebarColor">#F1F1F1</Color>
+        <Color x:Key="PanelColor">#FFFFFF</Color>
+        <Color x:Key="PanelMutedColor">#F8F8F8</Color>
+        <Color x:Key="PanelTintColor">#EFEFEF</Color>
+        <Color x:Key="BorderColor">#DEDEDE</Color>
+        <Color x:Key="BorderStrongColor">#C7C7C7</Color>
+        <Color x:Key="TextPrimaryColor">#171717</Color>
+        <Color x:Key="TextSecondaryColor">#454545</Color>
+        <Color x:Key="TextMutedColor">#707070</Color>
+        <Color x:Key="AccentGreenColor">#1F7A3D</Color>
+        <Color x:Key="AccentBlueColor">#0A56C2</Color>
+        <Color x:Key="AccentAmberColor">#B06A10</Color>
+        <Color x:Key="AccentRedColor">#B42318</Color>
+        <Color x:Key="AccentNeutralColor">#636363</Color>
+        <Color x:Key="ControlSurfaceColor">#FFFFFF</Color>
+        <Color x:Key="ControlSurfaceHoverColor">#F3F3F3</Color>
+        <Color x:Key="ControlSurfacePressedColor">#ECECEC</Color>
+        <Color x:Key="ControlBorderHoverColor">#B6B6B6</Color>
+        <Color x:Key="PrimaryButtonColor">#111111</Color>
+        <Color x:Key="PrimaryButtonHoverColor">#242424</Color>
+        <Color x:Key="PrimaryButtonPressedColor">#0A0A0A</Color>
+        <Color x:Key="PrimaryButtonForegroundColor">#FFFFFF</Color>
+        <Color x:Key="SelectionSurfaceColor">#ECECEC</Color>
+        <Color x:Key="SelectionBorderColor">#CCCCCC</Color>
+
+        <SolidColorBrush x:Key="AppWindowBrush" Color="{StaticResource AppWindowColor}" />
+        <SolidColorBrush x:Key="RailBrush" Color="{StaticResource RailColor}" />
+        <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SidebarColor}" />
+        <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource PanelColor}" />
+        <SolidColorBrush x:Key="PanelMutedBrush" Color="{StaticResource PanelMutedColor}" />
+        <SolidColorBrush x:Key="PanelTintBrush" Color="{StaticResource PanelTintColor}" />
+        <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+        <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrongColor}" />
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+        <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
+        <SolidColorBrush x:Key="AccentGreenBrush" Color="{StaticResource AccentGreenColor}" />
+        <SolidColorBrush x:Key="AccentBlueBrush" Color="{StaticResource AccentBlueColor}" />
+        <SolidColorBrush x:Key="AccentAmberBrush" Color="{StaticResource AccentAmberColor}" />
+        <SolidColorBrush x:Key="AccentRedBrush" Color="{StaticResource AccentRedColor}" />
+        <SolidColorBrush x:Key="AccentNeutralBrush" Color="{StaticResource AccentNeutralColor}" />
+        <SolidColorBrush x:Key="ControlSurfaceBrush" Color="{StaticResource ControlSurfaceColor}" />
+        <SolidColorBrush x:Key="ControlSurfaceHoverBrush" Color="{StaticResource ControlSurfaceHoverColor}" />
+        <SolidColorBrush x:Key="ControlSurfacePressedBrush" Color="{StaticResource ControlSurfacePressedColor}" />
+        <SolidColorBrush x:Key="ControlBorderHoverBrush" Color="{StaticResource ControlBorderHoverColor}" />
+        <SolidColorBrush x:Key="PrimaryButtonBrush" Color="{StaticResource PrimaryButtonColor}" />
+        <SolidColorBrush x:Key="PrimaryButtonHoverBrush" Color="{StaticResource PrimaryButtonHoverColor}" />
+        <SolidColorBrush x:Key="PrimaryButtonPressedBrush" Color="{StaticResource PrimaryButtonPressedColor}" />
+        <SolidColorBrush x:Key="PrimaryButtonForegroundBrush" Color="{StaticResource PrimaryButtonForegroundColor}" />
+        <SolidColorBrush x:Key="SelectionSurfaceBrush" Color="{StaticResource SelectionSurfaceColor}" />
+        <SolidColorBrush x:Key="SelectionBorderBrush" Color="{StaticResource SelectionBorderColor}" />
+    </Styles.Resources>
+</Styles>

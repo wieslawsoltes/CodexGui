@@ -1,0 +1,11 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="CodexGui.App.App"
+             RequestedThemeVariant="Light">
+    <Application.Styles>
+        <FluentTheme DensityStyle="Compact" />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.v2.xaml" />
+        <StyleInclude Source="avares://CodexGui.App/Styles/DesignTokens.axaml" />
+        <StyleInclude Source="avares://CodexGui.App/Styles/AppStyles.axaml" />
+    </Application.Styles>
+</Application>

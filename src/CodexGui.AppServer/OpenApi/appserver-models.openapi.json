@@ -1,0 +1,1401 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CodexGui AppServer Models",
+    "version": "1.0.0"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "InitializeResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userAgent": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AccountReadResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountInfo"
+              }
+            ],
+            "nullable": true
+          },
+          "requiresOpenaiAuth": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "requiresOpenaiAuth"
+        ]
+      },
+      "AccountInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "planType": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RateLimitsReadResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rateLimits": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RateLimitBucket"
+              }
+            ],
+            "nullable": true
+          },
+          "rateLimitsByLimitId": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RateLimitBucket"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "RateLimitBucket": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "limitId": {
+            "type": "string",
+            "nullable": true
+          },
+          "limitName": {
+            "type": "string",
+            "nullable": true
+          },
+          "primary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RateLimitWindow"
+              }
+            ],
+            "nullable": true
+          },
+          "secondary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RateLimitWindow"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "RateLimitWindow": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "usedPercent": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "windowDurationMins": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resetsAt": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        }
+      },
+      "ModelListResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelInfo"
+            },
+            "nullable": true
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ModelInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "defaultReasoningEffort": {
+            "type": "string",
+            "nullable": true
+          },
+          "supportedReasoningEfforts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReasoningEffortInfo"
+            },
+            "nullable": true
+          },
+          "inputModalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "supportsPersonality": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hidden",
+          "supportsPersonality",
+          "isDefault"
+        ]
+      },
+      "ReasoningEffortInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reasoningEffort": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ThreadListResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThreadSummary"
+            },
+            "nullable": true
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ThreadReadResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "thread": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadDetail"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "ThreadStartResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "thread": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadDetail"
+              }
+            ],
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelProvider": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TurnStartResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "turn": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadTurn"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "TurnInterruptResult": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ThreadSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "preview": {
+            "type": "string",
+            "nullable": true
+          },
+          "ephemeral": {
+            "type": "boolean"
+          },
+          "modelProvider": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadStatusInfo"
+              }
+            ],
+            "nullable": true
+          },
+          "cwd": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "ephemeral"
+        ]
+      },
+      "ThreadDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ThreadSummary"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "turns": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ThreadTurn"
+                },
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
+      "ThreadStatusInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "activeFlags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "ThreadTurn": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThreadItem"
+            },
+            "nullable": true
+          },
+          "error": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadTurnError"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "ThreadTurnError": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "additionalDetails": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ThreadItem": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "phase": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "content": {
+            "type": "object",
+            "nullable": true
+          },
+          "summary": {
+            "type": "object",
+            "nullable": true
+          },
+          "command": {
+            "type": "string",
+            "nullable": true
+          },
+          "cwd": {
+            "type": "string",
+            "nullable": true
+          },
+          "processId": {
+            "type": "string",
+            "nullable": true
+          },
+          "commandActions": {
+            "type": "object",
+            "nullable": true
+          },
+          "aggregatedOutput": {
+            "type": "string",
+            "nullable": true
+          },
+          "exitCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileUpdateChange"
+            },
+            "nullable": true
+          },
+          "server": {
+            "type": "string",
+            "nullable": true
+          },
+          "tool": {
+            "type": "string",
+            "nullable": true
+          },
+          "arguments": {
+            "type": "object",
+            "nullable": true
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/McpToolCallResult"
+              }
+            ],
+            "nullable": true
+          },
+          "error": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/McpToolCallError"
+              }
+            ],
+            "nullable": true
+          },
+          "contentItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DynamicToolCallOutputContentItem"
+            },
+            "nullable": true
+          },
+          "success": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "senderThreadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "receiverThreadIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "prompt": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "reasoningEffort": {
+            "type": "string",
+            "nullable": true
+          },
+          "agentsStates": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CollabAgentState"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "FileUpdateChange": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "type": "string",
+            "nullable": true
+          },
+          "diff": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "McpToolCallResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "nullable": true
+          },
+          "structuredContent": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "McpToolCallError": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "DynamicToolCallOutputContentItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CollabAgentState": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UserInputItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TurnStartedNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turn": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadTurn"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "ThreadStartedNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "thread": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadSummary"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "ThreadStatusChangedNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadStatusInfo"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "ThreadNameUpdatedNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "threadName": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TurnCompletedNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turn": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadTurn"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "ItemLifecycleNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "item": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadItem"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "AgentMessageDeltaNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "delta": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PlanDeltaNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "delta": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CommandExecutionOutputDeltaNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "delta": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TerminalInteractionNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "processId": {
+            "type": "string",
+            "nullable": true
+          },
+          "stdin": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "FileChangeOutputDeltaNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "delta": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "McpToolCallProgressNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TurnDiffUpdatedNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "diff": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TurnPlanUpdatedNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "explanation": {
+            "type": "string",
+            "nullable": true
+          },
+          "plan": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TurnPlanStep"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "TurnPlanStep": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "step": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ServerRequestResolvedNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestId": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "requestId"
+        ]
+      },
+      "CommandExecutionRequestApprovalParams": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "approvalId": {
+            "type": "string",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "command": {
+            "type": "string",
+            "nullable": true
+          },
+          "cwd": {
+            "type": "string",
+            "nullable": true
+          },
+          "commandActions": {
+            "type": "object",
+            "nullable": true
+          },
+          "networkApprovalContext": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NetworkApprovalContext"
+              }
+            ],
+            "nullable": true
+          },
+          "proposedExecpolicyAmendment": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "proposedNetworkPolicyAmendments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkPolicyAmendment"
+            },
+            "nullable": true
+          },
+          "additionalPermissions": {
+            "type": "object",
+            "nullable": true
+          },
+          "skillMetadata": {
+            "type": "object",
+            "nullable": true
+          },
+          "availableDecisions": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "NetworkApprovalContext": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "host": {
+            "type": "string",
+            "nullable": true
+          },
+          "protocol": {
+            "type": "string",
+            "nullable": true
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "NetworkPolicyAmendment": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string",
+            "nullable": true
+          },
+          "host": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "FileChangeRequestApprovalParams": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "grantRoot": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "DynamicToolCallParams": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "callId": {
+            "type": "string",
+            "nullable": true
+          },
+          "tool": {
+            "type": "string",
+            "nullable": true
+          },
+          "arguments": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "ToolRequestUserInputParams": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "turnId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToolRequestUserInputQuestion"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "ToolRequestUserInputQuestion": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "header": {
+            "type": "string",
+            "nullable": true
+          },
+          "question": {
+            "type": "string",
+            "nullable": true
+          },
+          "isOther": {
+            "type": "boolean"
+          },
+          "isSecret": {
+            "type": "boolean"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToolRequestUserInputOption"
+            },
+            "nullable": true
+          }
+        },
+        "required": [
+          "isOther",
+          "isSecret"
+        ]
+      },
+      "ToolRequestUserInputOption": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AppListResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppInfo"
+            },
+            "nullable": true
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AppInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "installUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAccessible": {
+            "type": "boolean"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "isAccessible",
+          "isEnabled"
+        ]
+      },
+      "SkillsListResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillsByWorkingDirectory"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "SkillsByWorkingDirectory": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "cwd": {
+            "type": "string",
+            "nullable": true
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillInfo"
+            },
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "SkillInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "interface": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SkillInterfaceInfo"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "SkillInterfaceInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "shortDescription": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ConfigRequirementsReadResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requirements": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigRequirementsInfo"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "ConfigRequirementsInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "allowedApprovalPolicies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "allowedSandboxModes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "featureRequirements": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "nullable": true
+          },
+          "network": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NetworkRequirementsInfo"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "NetworkRequirementsInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "allowedDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      }
+    }
+  }
+}

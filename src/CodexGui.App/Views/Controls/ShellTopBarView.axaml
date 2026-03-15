@@ -1,0 +1,190 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CodexGui.App.ViewModels"
+             xmlns:ic="using:FluentIcons.Avalonia"
+             x:Class="CodexGui.App.Views.Controls.ShellTopBarView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border x:Name="Root">
+        <Grid RowDefinitions="Auto,Auto"
+              RowSpacing="8">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="12">
+                <StackPanel Spacing="1">
+                    <TextBlock Text="{Binding CurrentWorkspaceTitle}" Classes="panelTitle" />
+                    <TextBlock Text="{Binding CurrentWorkspaceSubtitle}"
+                               Classes="mutedText"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <ItemsControl Grid.Column="1"
+                              ItemsSource="{Binding StatusChips}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:StatusChipViewModel">
+                            <Border Classes="statusChip"
+                                    Background="{Binding SurfaceBrush}"
+                                    BorderBrush="{Binding AccentBrush}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding Label}" Classes="chipLabel" />
+                                    <TextBlock Text="{Binding Value}" Classes="chipValue" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+
+            <WrapPanel Grid.Row="1"
+                       Orientation="Horizontal">
+                <ToggleButton Classes="panelToggle"
+                              Content="Rail"
+                              IsChecked="{Binding ShowNavigationRail, Mode=TwoWay}" />
+                <ToggleButton Classes="panelToggle"
+                              Content="Sidebar"
+                              IsChecked="{Binding ShowWorkspacePanel, Mode=TwoWay}" />
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding ShowThreadsCommand}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <ic:SymbolIcon Classes="buttonIcon"
+                                       Symbol="PanelLeft" />
+                        <TextBlock Text="Threads" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding ShowAppsCommand}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <ic:SymbolIcon Classes="buttonIcon"
+                                       Symbol="AppsSettings" />
+                        <TextBlock Text="Apps" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding ShowSettingsCommand}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <ic:SymbolIcon Classes="buttonIcon"
+                                       Symbol="SettingsChat" />
+                        <TextBlock Text="Settings" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding ReloadMcpServersCommand}"
+                        ToolTip.Tip="Reload MCP server registrations">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <ic:SymbolIcon Classes="buttonIcon"
+                                       Symbol="ArrowSync" />
+                        <TextBlock Text="Reload MCP" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding ForkThreadCommand}"
+                        ToolTip.Tip="Fork selected thread">
+                    <TextBlock Text="Fork" />
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding ArchiveThreadCommand}"
+                        ToolTip.Tip="Archive selected thread">
+                    <TextBlock Text="Archive" />
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding UnarchiveThreadCommand}"
+                        ToolTip.Tip="Unarchive selected thread">
+                    <TextBlock Text="Unarchive" />
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding RenameThreadCommand}"
+                        ToolTip.Tip="Rename selected thread using current composer text">
+                    <TextBlock Text="Rename" />
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding CompactThreadCommand}"
+                        ToolTip.Tip="Start context compaction for selected thread">
+                    <TextBlock Text="Compact" />
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding RollbackThreadCommand}"
+                        ToolTip.Tip="Rollback the last turn in selected thread">
+                    <TextBlock Text="Rollback" />
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding StartReviewCommand}"
+                        ToolTip.Tip="Start inline review for uncommitted changes">
+                    <TextBlock Text="Review" />
+                </Button>
+                <CheckBox Content="Auto-scroll"
+                          IsChecked="{Binding AutoScrollMessages, Mode=TwoWay}"
+                          VerticalAlignment="Center"
+                          Margin="0,0,6,0" />
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <ic:SymbolIcon Classes="buttonIcon"
+                                       Symbol="ArrowSync" />
+                        <TextBlock Text="Refresh" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding DisconnectCommand}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <ic:SymbolIcon Classes="buttonIcon"
+                                       Symbol="PlugDisconnected" />
+                        <TextBlock Text="Disconnect" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="primaryButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding ConnectCommand}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <ic:SymbolIcon Classes="buttonIcon"
+                                       Symbol="PlugConnectedCheckmark" />
+                        <TextBlock Text="Connect" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding LoginCommand}">
+                    <TextBlock Text="Login" />
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding CancelLoginCommand}"
+                        IsVisible="{Binding HasActiveLogin}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <ic:SymbolIcon Classes="buttonIcon"
+                                       Symbol="DismissCircle" />
+                        <TextBlock Text="Cancel Login" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="toolbarButton"
+                        Margin="0,0,6,0"
+                        Command="{Binding LogoutCommand}">
+                    <TextBlock Text="Logout" />
+                </Button>
+            </WrapPanel>
+        </Grid>
+    </Border>
+</UserControl>

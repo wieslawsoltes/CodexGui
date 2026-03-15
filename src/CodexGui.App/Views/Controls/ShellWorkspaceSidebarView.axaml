@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CodexGui.App.ViewModels"
+             xmlns:ic="using:FluentIcons.Avalonia"
+             x:Class="CodexGui.App.Views.Controls.ShellWorkspaceSidebarView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border x:Name="Root">
+        <Grid RowDefinitions="Auto,*"
+              RowSpacing="10">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Workspace"
+                           Classes="sectionLabel" />
+                <TextBlock Text="{Binding CurrentWorkspaceTitle}"
+                           Classes="panelTitle"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding CurrentWorkspaceSubtitle}"
+                           Classes="mutedText"
+                           TextWrapping="Wrap"
+                           MaxLines="2" />
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="8"
+                      Margin="0,8,0,0">
+                    <TextBlock Text="Threads"
+                               Classes="panelTitle" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding ThreadCountLabel}"
+                               Classes="bodyText" />
+                </Grid>
+                <Button Classes="sidebarActionButton"
+                        Margin="0,4,0,0"
+                        Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <ic:SymbolIcon Classes="buttonIcon"
+                                       Symbol="ArrowSync" />
+                        <TextBlock Text="Refresh sessions" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <ListBox Grid.Row="1"
+                     x:Name="ThreadList"
+                     ItemsSource="{Binding RecentThreads}"
+                     SelectedItem="{Binding SelectedThread, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ThreadListEntryViewModel">
+                        <Border Classes="threadRow">
+                            <StackPanel Spacing="4">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="10">
+                                    <TextBlock Text="{Binding Title}"
+                                               Classes="threadTitle"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding TimeLabel}"
+                                               Classes="mutedText" />
+                                </Grid>
+                                <TextBlock Text="{Binding Preview}"
+                                           Classes="bodyText"
+                                           MaxLines="2"
+                                           TextWrapping="Wrap" />
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="10">
+                                    <TextBlock Text="{Binding Meta}"
+                                               Classes="mutedText"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Badge}"
+                                               Classes="mutedText" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+        </Grid>
+    </Border>
+</UserControl>

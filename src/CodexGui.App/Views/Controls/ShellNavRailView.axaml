@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CodexGui.App.ViewModels"
+             xmlns:ic="using:FluentIcons.Avalonia"
+             x:Class="CodexGui.App.Views.Controls.ShellNavRailView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border x:Name="Root">
+        <Grid RowDefinitions="Auto,*,Auto"
+              RowSpacing="10">
+            <Border Classes="brandBadge"
+                    HorizontalAlignment="Center"
+                    Margin="0,12,0,0">
+                <TextBlock Text="C"
+                           Classes="brandGlyph" />
+            </Border>
+
+            <StackPanel Grid.Row="1"
+                        HorizontalAlignment="Center"
+                        Spacing="6"
+                        Margin="0,8,0,0">
+                <Button Classes="railButton"
+                        ToolTip.Tip="New thread"
+                        Command="{Binding NewThreadCommand}">
+                    <ic:SymbolIcon Classes="buttonIcon"
+                                   Symbol="ChatAdd" />
+                </Button>
+                <Button Classes="railButton"
+                        ToolTip.Tip="Threads"
+                        Command="{Binding ShowThreadsCommand}">
+                    <ic:SymbolIcon Classes="buttonIcon"
+                                   Symbol="PanelLeft" />
+                </Button>
+                <Button Classes="railButton"
+                        ToolTip.Tip="Apps"
+                        Command="{Binding ShowAppsCommand}">
+                    <ic:SymbolIcon Classes="buttonIcon"
+                                   Symbol="AppsSettings" />
+                </Button>
+                <Button Classes="railButton"
+                        ToolTip.Tip="Settings"
+                        Command="{Binding ShowSettingsCommand}">
+                    <ic:SymbolIcon Classes="buttonIcon"
+                                   Symbol="SettingsChat" />
+                </Button>
+            </StackPanel>
+
+            <StackPanel Grid.Row="2"
+                        HorizontalAlignment="Center"
+                        Spacing="8"
+                        Margin="0,0,0,12">
+                <Button Classes="railButton"
+                        ToolTip.Tip="App-server connection">
+                    <Button.Flyout>
+                        <Flyout Placement="RightEdgeAlignedTop">
+                            <Border Classes="threadConnectionCard"
+                                    Width="360">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="App-server connection"
+                                               Classes="panelTitle" />
+                                    <TextBlock Text="{Binding ConnectionDetail}"
+                                               Classes="mutedText"
+                                               TextWrapping="Wrap" />
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Executable or endpoint"
+                                                   Classes="sectionLabel" />
+                                        <TextBox Classes="commandField"
+                                                 Text="{Binding CommandPath}" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Arguments (local process)"
+                                                   Classes="sectionLabel" />
+                                        <TextBox Classes="commandField"
+                                                 Text="{Binding CommandArguments}" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Working directory"
+                                                   Classes="sectionLabel" />
+                                        <TextBox Classes="commandField"
+                                                 Text="{Binding WorkingDirectory}" />
+                                    </StackPanel>
+                                    <WrapPanel Orientation="Horizontal">
+                                        <Button Classes="toolbarButton"
+                                                Command="{Binding DisconnectCommand}">
+                                            <StackPanel Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <ic:SymbolIcon Classes="buttonIcon"
+                                                               Symbol="PlugDisconnected" />
+                                                <TextBlock Text="Disconnect" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="primaryButton"
+                                                Command="{Binding ConnectCommand}">
+                                            <StackPanel Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <ic:SymbolIcon Classes="buttonIcon"
+                                                               Symbol="PlugConnectedCheckmark" />
+                                                <TextBlock Text="Connect" />
+                                            </StackPanel>
+                                        </Button>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
+                    <ic:SymbolIcon Classes="buttonIcon"
+                                   Symbol="PlugConnectedCheckmark"
+                                   Foreground="{Binding ConnectionBrush}" />
+                </Button>
+                <Button Classes="railButton"
+                        ToolTip.Tip="Refresh"
+                        Command="{Binding RefreshCommand}">
+                    <ic:SymbolIcon Classes="buttonIcon"
+                                   Symbol="ArrowSync" />
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

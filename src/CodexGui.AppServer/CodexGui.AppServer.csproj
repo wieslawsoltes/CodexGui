@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NSwagCli>$(NSwagExe_Net90)</NSwagCli>
+    <NSwagCli Condition="'$(NSwagCli)' == ''">$(NSwagExe)</NSwagCli>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NSwag.MSBuild" Version="14.2.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <Target Name="GenerateAppServerProtocolDtos"
+          BeforeTargets="CoreCompile"
+          Inputs="$(MSBuildProjectDirectory)/OpenApi/appserver-models.openapi.json;$(MSBuildProjectDirectory)/nswag.models.json"
+          Outputs="$(MSBuildProjectDirectory)/Models/AppServerProtocolDtos.Generated.cs">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="&quot;$(NSwagCli)&quot; run nswag.models.json" />
+  </Target>
+
+</Project>
