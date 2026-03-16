@@ -26,6 +26,23 @@ CodexGui brings a Codex-style workspace to a desktop-native .NET application. Th
 | `src/CodexGui.Markdown.Plugin.*` | Feature plugins for alerts, custom containers, definition lists, figures, footers, math, Mermaid, syntax highlighting, and TextMate integration. |
 | `src/CodexGui.Markdown.Sample` | Standalone sample application for exploring the markdown stack in isolation. |
 
+## NuGet packages
+
+| Package | Version | Downloads | Notes |
+| --- | --- | --- | --- |
+| [`CodexGui.App`](https://www.nuget.org/packages/CodexGui.App) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.App?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.App?logo=nuget) | .NET tool package for launching the Avalonia desktop client via `codexgui`. |
+| [`CodexGui.AppServer`](https://www.nuget.org/packages/CodexGui.AppServer) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.AppServer?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.AppServer?logo=nuget) | Typed client transport and protocol models for Codex app-server connections. |
+| [`CodexGui.Markdown`](https://www.nuget.org/packages/CodexGui.Markdown) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown?logo=nuget) | Core Avalonia markdown rendering and editing package. |
+| [`CodexGui.Markdown.Plugin.Alerts`](https://www.nuget.org/packages/CodexGui.Markdown.Plugin.Alerts) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown.Plugin.Alerts?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown.Plugin.Alerts?logo=nuget) | Alert block support for the markdown stack. |
+| [`CodexGui.Markdown.Plugin.CustomContainers`](https://www.nuget.org/packages/CodexGui.Markdown.Plugin.CustomContainers) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown.Plugin.CustomContainers?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown.Plugin.CustomContainers?logo=nuget) | Generic custom-container parsing and rendering support. |
+| [`CodexGui.Markdown.Plugin.DefinitionLists`](https://www.nuget.org/packages/CodexGui.Markdown.Plugin.DefinitionLists) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown.Plugin.DefinitionLists?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown.Plugin.DefinitionLists?logo=nuget) | Definition list support for the markdown stack. |
+| [`CodexGui.Markdown.Plugin.Figures`](https://www.nuget.org/packages/CodexGui.Markdown.Plugin.Figures) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown.Plugin.Figures?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown.Plugin.Figures?logo=nuget) | Figure block parsing and rendering support. |
+| [`CodexGui.Markdown.Plugin.Footers`](https://www.nuget.org/packages/CodexGui.Markdown.Plugin.Footers) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown.Plugin.Footers?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown.Plugin.Footers?logo=nuget) | Footer block support for reusable markdown surfaces. |
+| [`CodexGui.Markdown.Plugin.Math`](https://www.nuget.org/packages/CodexGui.Markdown.Plugin.Math) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown.Plugin.Math?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown.Plugin.Math?logo=nuget) | Inline and block math support. |
+| [`CodexGui.Markdown.Plugin.Mermaid`](https://www.nuget.org/packages/CodexGui.Markdown.Plugin.Mermaid) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown.Plugin.Mermaid?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown.Plugin.Mermaid?logo=nuget) | Mermaid diagram support for markdown documents. |
+| [`CodexGui.Markdown.Plugin.SyntaxHighlighting`](https://www.nuget.org/packages/CodexGui.Markdown.Plugin.SyntaxHighlighting) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown.Plugin.SyntaxHighlighting?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown.Plugin.SyntaxHighlighting?logo=nuget) | Built-in code syntax highlighting support. |
+| [`CodexGui.Markdown.Plugin.TextMate`](https://www.nuget.org/packages/CodexGui.Markdown.Plugin.TextMate) | ![NuGet Version](https://img.shields.io/nuget/v/CodexGui.Markdown.Plugin.TextMate?logo=nuget) | ![NuGet Downloads](https://img.shields.io/nuget/dt/CodexGui.Markdown.Plugin.TextMate?logo=nuget) | TextMate-backed highlighting and editor integration. |
+
 ## Tech stack
 
 - .NET 10
