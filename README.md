@@ -84,8 +84,9 @@ The repository also includes PowerShell equivalents: `./build-docs.ps1`, `./chec
 
 ### GitHub Actions
 
-- `.github/workflows/build.yml` validates the solution build, test baseline, and Lunet docs generation.
+- `.github/workflows/build.yml` validates the solution build, test baseline, Lunet docs generation, and NuGet package creation.
 - `.github/workflows/docs.yml` deploys the `site/` output to GitHub Pages.
+- `.github/workflows/release.yml` builds tagged releases, packs the reusable libraries, publishes NuGet packages, and creates the GitHub release entry.
 
 ## What ships today
 

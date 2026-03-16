@@ -30,8 +30,9 @@ PowerShell equivalents are also available:
 
 ## CI layout
 
-- `build.yml` validates build, test, and docs generation on pushes and pull requests.
+- `build.yml` validates build, test, docs generation, and NuGet packaging on pushes and pull requests.
 - `docs.yml` deploys the Lunet site to GitHub Pages for the main or master branch.
+- `release.yml` builds tagged releases, packs the reusable libraries, publishes them to NuGet.org, and creates the GitHub release.
 
 ## Site structure
 
