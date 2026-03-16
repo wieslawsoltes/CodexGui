@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui</loc>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/getting-started</loc>
+    <lastmod>2026-03-16</lastmod>
+  </url>
+  <url>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/markdown</loc>
     <lastmod>2026-03-16</lastmod>
   </url>
   <url>
@@ -9,19 +13,15 @@
     <lastmod>2026-03-16</lastmod>
   </url>
   <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/getting-started</loc>
-    <lastmod>2026-03-16</lastmod>
-  </url>
-  <url>
     <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles</loc>
     <lastmod>2026-03-16</lastmod>
   </url>
   <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/getting-started/overview</loc>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/reference</loc>
     <lastmod>2026-03-16</lastmod>
   </url>
   <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/application/interaction-model</loc>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui</loc>
     <lastmod>2026-03-16</lastmod>
   </url>
   <url>
@@ -33,23 +33,7 @@
     <lastmod>2026-03-16</lastmod>
   </url>
   <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/application</loc>
-    <lastmod>2026-03-16</lastmod>
-  </url>
-  <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/application/shell-and-transport</loc>
-    <lastmod>2026-03-16</lastmod>
-  </url>
-  <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/markdown</loc>
-    <lastmod>2026-03-16</lastmod>
-  </url>
-  <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/markdown/plugin-ecosystem</loc>
-    <lastmod>2026-03-16</lastmod>
-  </url>
-  <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/reference</loc>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/reference/roadmap</loc>
     <lastmod>2026-03-16</lastmod>
   </url>
   <url>
@@ -57,7 +41,23 @@
     <lastmod>2026-03-16</lastmod>
   </url>
   <url>
-    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/reference/roadmap</loc>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/application</loc>
+    <lastmod>2026-03-16</lastmod>
+  </url>
+  <url>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/getting-started/overview</loc>
+    <lastmod>2026-03-16</lastmod>
+  </url>
+  <url>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/application/interaction-model</loc>
+    <lastmod>2026-03-16</lastmod>
+  </url>
+  <url>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/application/shell-and-transport</loc>
+    <lastmod>2026-03-16</lastmod>
+  </url>
+  <url>
+    <loc>https://wieslawsoltes.github.io/CodexGui/CodexGui/articles/markdown/plugin-ecosystem</loc>
     <lastmod>2026-03-16</lastmod>
   </url>
 </urlset>
