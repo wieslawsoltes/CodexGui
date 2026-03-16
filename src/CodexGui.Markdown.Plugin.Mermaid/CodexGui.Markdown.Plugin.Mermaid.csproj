@@ -5,8 +5,17 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>CodexGui.Markdown.Plugin.Mermaid</PackageId>
+    <Title>CodexGui Markdown Mermaid Plugin</Title>
+    <Description>Mermaid diagram rendering support for CodexGui.Markdown.</Description>
+    <PackageTags>$(PackageTags);avalonia;markdown;plugin;mermaid;diagrams</PackageTags>
+  </PropertyGroup>
+
+
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.12" />
+    <PackageReference Include="Avalonia" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,9 +5,18 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>CodexGui.Markdown.Plugin.SyntaxHighlighting</PackageId>
+    <Title>CodexGui Markdown Syntax Highlighting Plugin</Title>
+    <Description>Built-in syntax highlighting support for CodexGui.Markdown code blocks.</Description>
+    <PackageTags>$(PackageTags);avalonia;markdown;plugin;syntax-highlighting;code</PackageTags>
+  </PropertyGroup>
+
+
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.12" />
-    <PackageReference Include="Markdig" Version="1.1.1" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Markdig" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,8 +5,17 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>CodexGui.Markdown</PackageId>
+    <Title>CodexGui Markdown</Title>
+    <Description>Avalonia markdown rendering and editing primitives for CodexGui-style conversation, diff, and document surfaces.</Description>
+    <PackageTags>$(PackageTags);avalonia;markdown;markdig;editor</PackageTags>
+  </PropertyGroup>
+
+
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.12" />
-    <PackageReference Include="Markdig" Version="1.1.1" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Markdig" />
   </ItemGroup>
 </Project>

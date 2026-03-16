@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -8,8 +8,17 @@
     <NSwagCli Condition="'$(NSwagCli)' == ''">$(NSwagExe)</NSwagCli>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>CodexGui.AppServer</PackageId>
+    <Title>CodexGui AppServer</Title>
+    <Description>Typed client transport and generated protocol models for Codex app-server process and WebSocket connections.</Description>
+    <PackageTags>$(PackageTags);app-server;protocol;json-rpc;websocket;process</PackageTags>
+  </PropertyGroup>
+
+
   <ItemGroup>
-    <PackageReference Include="NSwag.MSBuild" Version="14.2.0">
+    <PackageReference Include="NSwag.MSBuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

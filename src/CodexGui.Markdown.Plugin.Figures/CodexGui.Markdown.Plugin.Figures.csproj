@@ -5,9 +5,18 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>CodexGui.Markdown.Plugin.Figures</PackageId>
+    <Title>CodexGui Markdown Figures Plugin</Title>
+    <Description>Figure block parsing, rendering, and editing support for CodexGui.Markdown.</Description>
+    <PackageTags>$(PackageTags);avalonia;markdown;plugin;figures</PackageTags>
+  </PropertyGroup>
+
+
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.12" />
-    <PackageReference Include="Markdig" Version="1.1.1" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Markdig" />
   </ItemGroup>
 
   <ItemGroup>
