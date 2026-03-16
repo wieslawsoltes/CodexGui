@@ -63,6 +63,30 @@ dotnet run --project src/CodexGui.Markdown.Sample/CodexGui.Markdown.Sample.cspro
 
 Use the sample app to inspect the reusable markdown editor and preview pipeline outside the main Codex workspace shell.
 
+## Documentation
+
+Project documentation now lives under `site/` and is built with Lunet for GitHub Pages deployment.
+
+### Build docs locally
+
+```bash
+dotnet tool restore
+bash ./check-docs.sh
+```
+
+### Serve docs locally
+
+```bash
+bash ./serve-docs.sh
+```
+
+The repository also includes PowerShell equivalents: `./build-docs.ps1`, `./check-docs.ps1`, and `./serve-docs.ps1`.
+
+### GitHub Actions
+
+- `.github/workflows/build.yml` validates the solution build, test baseline, and Lunet docs generation.
+- `.github/workflows/docs.yml` deploys the `site/` output to GitHub Pages.
+
 ## What ships today
 
 - Codex-style desktop workspace chrome and thread inspection flows

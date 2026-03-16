@@ -1,0 +1,29 @@
+name: Docs
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.lunet.outputs.page_url }}
+    steps:
+      - id: lunet
+        name: Build and deploy Lunet site
+        uses: lunet-io/actions/lunet-build@v1
+        with:
+          build_command: bash ../check-docs.sh
+          dotnet_version: 10.0.x
+          lunet_version: 1.0.10
+          site_path: site

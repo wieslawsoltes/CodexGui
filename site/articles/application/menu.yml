@@ -1,0 +1,4 @@
+application:
+  - {path: readme.md, title: "Application Shell"}
+  - {path: shell-and-transport.md, title: "Shell and Transport"}
+  - {path: interaction-model.md, title: "Interaction Model"}
