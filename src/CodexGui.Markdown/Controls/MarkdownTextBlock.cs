@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using CodexGui.Markdown.Services;
+using Markdig.Syntax.Inlines;
 
 namespace CodexGui.Markdown.Controls;
 
@@ -25,6 +26,8 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
             nameof(EditorPresentationMode),
             defaultValue: MarkdownEditorPresentationMode.Inline);
 
+    private const double LinkClickDragThreshold = 4d;
+    private static readonly Cursor LinkCursor = new(StandardCursorType.Hand);
     private IMarkdownRenderController _renderController = MarkdownRenderingServices.DefaultController;
     private IMarkdownHitTestingService _hitTestingService = MarkdownRenderingServices.DefaultHitTestingService;
     private IMarkdownEditingService _editingService = MarkdownRenderingServices.DefaultEditingService;
@@ -35,6 +38,8 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
     private int _renderGeneration;
     private double _lastMeasuredWidth = double.NaN;
     private double _effectiveViewportWidth = double.NaN;
+    private Point? _pendingLinkPointerOrigin;
+    private Uri? _pendingLinkUri;
 
     static MarkdownTextBlock()
     {
@@ -155,6 +160,8 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
         _effectiveViewportWidth = double.NaN;
         _lastRenderResult = null;
         _activeEditorSession = null;
+        ClearPendingLinkInteraction();
+        ClearValue(CursorProperty);
         DisposeRenderResources();
     }
 
@@ -225,6 +232,19 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
             return;
         }
 
+        var point = e.GetPosition(this);
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed &&
+            TryResolveLinkTarget(point, out var navigateUri) &&
+            navigateUri is not null)
+        {
+            _pendingLinkPointerOrigin = point;
+            _pendingLinkUri = navigateUri;
+        }
+        else
+        {
+            ClearPendingLinkInteraction();
+        }
+
         base.OnPointerPressed(e);
     }
 
@@ -233,6 +253,15 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
         if (ShouldBypassSelectionPointerHandling())
         {
             return;
+        }
+
+        var point = e.GetPosition(this);
+        UpdateLinkCursor(point);
+
+        if (_pendingLinkPointerOrigin is { } pressedPoint &&
+            HasExceededLinkClickDragThreshold(pressedPoint, point))
+        {
+            ClearPendingLinkInteraction();
         }
 
         base.OnPointerMoved(e);
@@ -245,7 +274,38 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
             return;
         }
 
+        var point = e.GetPosition(this);
+        var pendingLinkUri = _pendingLinkUri;
+        var pendingLinkPointerOrigin = _pendingLinkPointerOrigin;
+
         base.OnPointerReleased(e);
+
+        if (e.InitialPressMouseButton == MouseButton.Left &&
+            pendingLinkUri is not null &&
+            pendingLinkPointerOrigin is { } pressedPoint &&
+            !HasExceededLinkClickDragThreshold(pressedPoint, point) &&
+            TryResolveLinkTarget(point, out var releasedLinkUri) &&
+            releasedLinkUri is not null &&
+            Uri.Compare(
+                pendingLinkUri,
+                releasedLinkUri,
+                UriComponents.AbsoluteUri,
+                UriFormat.SafeUnescaped,
+                StringComparison.OrdinalIgnoreCase) == 0)
+        {
+            e.Handled = true;
+            _ = LaunchUriAsync(releasedLinkUri);
+        }
+
+        ClearPendingLinkInteraction();
+        UpdateLinkCursor(point);
+    }
+
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        ClearPendingLinkInteraction();
+        ClearValue(CursorProperty);
+        base.OnPointerExited(e);
     }
 
     private void HandleAvailableWidthChanged(double width)
@@ -270,8 +330,71 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
         return _activeEditorSession is not null;
     }
 
+    private void UpdateLinkCursor(Point point)
+    {
+        if (TryResolveLinkTarget(point, out _))
+        {
+            SetCurrentValue(CursorProperty, LinkCursor);
+        }
+        else
+        {
+            ClearValue(CursorProperty);
+        }
+    }
+
+    private bool TryResolveLinkTarget(Point point, out Uri? navigateUri)
+    {
+        return TryResolveLinkTarget(HitTestMarkdown(point), out navigateUri);
+    }
+
+    private bool TryResolveLinkTarget(MarkdownHitTestResult? hitTestResult, out Uri? navigateUri)
+    {
+        navigateUri = null;
+
+        if (hitTestResult is null)
+        {
+            return false;
+        }
+
+        switch (hitTestResult.AstNode.Node)
+        {
+            case LinkInline { IsImage: false } linkInline:
+                return MarkdownUriUtilities.TryResolveUri(BaseUri, linkInline.GetDynamicUrl?.Invoke() ?? linkInline.Url, out navigateUri);
+            case AutolinkInline autolinkInline:
+                var navigateUrl = autolinkInline.IsEmail
+                    ? $"mailto:{autolinkInline.Url}"
+                    : autolinkInline.Url;
+                return MarkdownUriUtilities.TryResolveUri(BaseUri, navigateUrl, out navigateUri);
+            default:
+                return false;
+        }
+    }
+
+    private Task LaunchUriAsync(Uri navigateUri)
+    {
+        return TopLevel.GetTopLevel(this) is { } topLevel
+            ? topLevel.Launcher.LaunchUriAsync(navigateUri)
+            : Task.CompletedTask;
+    }
+
+    private void ClearPendingLinkInteraction()
+    {
+        _pendingLinkPointerOrigin = null;
+        _pendingLinkUri = null;
+    }
+
+    private static bool HasExceededLinkClickDragThreshold(Point origin, Point current)
+    {
+        var deltaX = current.X - origin.X;
+        var deltaY = current.Y - origin.Y;
+        var thresholdSquared = LinkClickDragThreshold * LinkClickDragThreshold;
+        return ((deltaX * deltaX) + (deltaY * deltaY)) > thresholdSquared;
+    }
+
     private void RebuildMarkdown()
     {
+        ClearPendingLinkInteraction();
+        ClearValue(CursorProperty);
         var previousResources = _renderResources;
         var resourceTracker = new MarkdownRenderResourceTracker();
         var renderGeneration = unchecked(++_renderGeneration);

@@ -1528,7 +1528,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                 linkText = url;
             }
 
-            AppendHyperlinkInline(output, navigateUri, linkText ?? string.Empty, state);
+            AppendHyperlinkInline(output, linkText ?? string.Empty, state);
             return;
         }
 
@@ -1582,7 +1582,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         var navigateUrl = autolink.IsEmail ? $"mailto:{autolink.Url}" : autolink.Url;
         if (TryResolveUri(state.Options, navigateUrl, out var navigateUri) && navigateUri is not null)
         {
-            AppendHyperlinkInline(output, navigateUri, autolink.Url, state);
+            AppendHyperlinkInline(output, autolink.Url, state);
             return;
         }
 
@@ -1609,19 +1609,16 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             foreground: LinkForeground);
     }
 
-    private static void AppendHyperlinkInline(InlineCollection output, Uri navigateUri, string text, RenderState state)
+    private static void AppendHyperlinkInline(InlineCollection output, string text, RenderState state)
     {
-        var hyperlinkText = new InlineHyperlinkTextBlock(navigateUri)
+        var hyperlinkSpan = new Span
         {
-            Text = text,
             Foreground = LinkForeground,
-            FontSize = state.Options.FontSize,
-            FontFamily = state.Options.FontFamily,
-            TextDecorations = Avalonia.Media.TextDecorations.Underline,
-            TextWrapping = TextWrapping.NoWrap
+            TextDecorations = Avalonia.Media.TextDecorations.Underline
         };
-        AttachElementInfo(hyperlinkText, state.SourceObject, MarkdownRenderedElementKind.InlineControl);
-        output.Add(CreateInlineControlContainer(hyperlinkText, state.SourceObject, MarkdownRenderedElementKind.InlineControl, BaselineAlignment.Baseline));
+        AttachElementInfo(hyperlinkSpan, state.SourceObject, MarkdownRenderedElementKind.Text);
+        hyperlinkSpan.Inlines.Add(AttachElementInfo(new Run(text), state.SourceObject, MarkdownRenderedElementKind.Text));
+        output.Add(hyperlinkSpan);
     }
 
     private static string ExtractInlineText(ContainerInline container)
@@ -1758,7 +1755,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
     private static Uri? ResolveUri(MarkdownRenderContext context, string? url)
     {
-        return TryResolveUri(context, url, out var resolvedUri) ? resolvedUri : null;
+        return MarkdownUriUtilities.ResolveUri(context.BaseUri, url);
     }
 
     private static SelectableTextBlock CreateRenderedTextBlock(
@@ -2878,56 +2875,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
     private static bool TryResolveUri(MarkdownRenderContext context, string? url, out Uri? resolvedUri)
     {
-        resolvedUri = null;
-
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            return false;
-        }
-
-        var trimmed = url.Trim();
-        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absoluteUri))
-        {
-            resolvedUri = absoluteUri;
-            return true;
-        }
-
-        if (context.BaseUri is not null &&
-            Uri.TryCreate(context.BaseUri, trimmed, out var baseResolvedUri) &&
-            baseResolvedUri.IsAbsoluteUri)
-        {
-            resolvedUri = baseResolvedUri;
-            return true;
-        }
-
-        if (TryCreateFileUri(trimmed, out var fileUri))
-        {
-            resolvedUri = fileUri;
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool TryCreateFileUri(string path, out Uri? fileUri)
-    {
-        fileUri = null;
-
-        try
-        {
-            var fullPath = Path.GetFullPath(path);
-            if (!File.Exists(fullPath))
-            {
-                return false;
-            }
-
-            fileUri = new Uri(fullPath);
-            return true;
-        }
-        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
-        {
-            return false;
-        }
+        return MarkdownUriUtilities.TryResolveUri(context.BaseUri, url, out resolvedUri);
     }
 
     private static void AppendQuotePrefix(RenderState state)
@@ -3361,49 +3309,6 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private sealed record TableCellHitTarget(Border Border, MarkdownAstNodeInfo AstNode);
 
     private sealed record CodeLineHitTarget(int RenderedStart, int RenderedLength, MarkdownSourceSpan? SourceSpan);
-
-    private sealed class InlineHyperlinkTextBlock : TextBlock
-    {
-        private readonly Uri _navigateUri;
-
-        public InlineHyperlinkTextBlock(Uri navigateUri)
-        {
-            _navigateUri = navigateUri;
-            Cursor = new Cursor(StandardCursorType.Hand);
-            Focusable = true;
-            Background = Brushes.Transparent;
-            Tapped += OnTapped;
-        }
-
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            base.OnKeyDown(e);
-
-            if (e.Key is not (Key.Enter or Key.Space))
-            {
-                return;
-            }
-
-            e.Handled = true;
-            _ = LaunchAsync();
-        }
-
-        private void OnTapped(object? sender, TappedEventArgs e)
-        {
-            e.Handled = true;
-            _ = LaunchAsync();
-        }
-
-        private async Task LaunchAsync()
-        {
-            if (TopLevel.GetTopLevel(this) is not { } topLevel)
-            {
-                return;
-            }
-
-            await topLevel.Launcher.LaunchUriAsync(_navigateUri);
-        }
-    }
 
     private sealed class MarkdownRichBlockHost(double preferredWidth) : Decorator
     {
