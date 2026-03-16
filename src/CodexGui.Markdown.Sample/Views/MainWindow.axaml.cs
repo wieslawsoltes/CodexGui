@@ -12,8 +12,14 @@ using Avalonia.Threading;
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.TextMate;
 using CodexGui.Markdown.Controls;
+using CodexGui.Markdown.Plugin.Alerts;
+using CodexGui.Markdown.Plugin.CustomContainers;
+using CodexGui.Markdown.Plugin.DefinitionLists;
+using CodexGui.Markdown.Plugin.Figures;
+using CodexGui.Markdown.Plugin.Footers;
 using CodexGui.Markdown.Plugin.Math;
 using CodexGui.Markdown.Plugin.Mermaid;
+using CodexGui.Markdown.Plugin.SyntaxHighlighting;
 using CodexGui.Markdown.Plugin.TextMate;
 using CodexGui.Markdown.Sample.Controls;
 using CodexGui.Markdown.Services;
@@ -25,8 +31,14 @@ public partial class MainWindow : Window
 {
     private static readonly IMarkdownPlugin[] PreviewPlugins =
     [
+        new AlertsMarkdownPlugin(),
+        new CustomContainersMarkdownPlugin(),
+        new DefinitionListMarkdownPlugin(),
+        new FiguresMarkdownPlugin(),
+        new FootersMarkdownPlugin(),
         new MathMarkdownPlugin(),
         new MermaidMarkdownPlugin(),
+        new SyntaxHighlightingMarkdownPlugin(),
         new TextMateMarkdownPlugin()
     ];
 
@@ -630,9 +642,9 @@ public partial class MainWindow : Window
         - Live markdown preview updates as you type.
         - TextMate-based syntax highlighting in AvaloniaEdit.
         - Markdown foldings for headings and fenced code blocks.
-        - Plugin-based preview rendering for Mermaid diagrams and code fences.
-        - Native rendering for alerts, custom containers, definition lists, abbreviations, and AST-backed math.
-        - Optional in-place preview editing for paragraphs, headings, lists, tables, code blocks, Mermaid diagrams, and math nodes.
+        - Plugin-based preview rendering for Mermaid diagrams, alert callouts, built-in syntax highlighting, and code fences.
+        - AST-backed rendering for alerts, figures, custom containers, definition lists, footers, and math plus native abbreviations.
+        - Optional in-place preview editing for alerts, figures, custom containers, footers, paragraphs, headings, lists, tables, code blocks, Mermaid diagrams, and math nodes.
         - In-place text editing for paragraphs, headings, and list items with one editor surface per block plus formatting actions.
         - Insert new markdown blocks before or after the active block while editing in the preview.
         - Native `File` menu with New/Open/Save/Save As.
@@ -647,17 +659,45 @@ public partial class MainWindow : Window
 
         Images render inline when their source can be resolved from an absolute URL, a relative path backed by `BaseUri`, or a base64 `data:` URI.
 
+        ## Figures
+
+        ^^^ Preview surface
+        Supporting markdown can live inside a figure body without getting mixed into the opening or closing fence captions.
+
+        - lead captions behave like a figure title
+        - closing captions behave like supporting notes
+
+        ```json
+        {
+          "feature": "figures",
+          "mode": "plugin-backed"
+        }
+        ```
+        ^^^ Figure captions now edit independently from the body without manually rewriting the `^^^` fence lines.
+
         ## Alerts and custom containers
 
         > [!IMPORTANT]
-        > Advanced parser nodes now flow through the native renderer instead of dropping to plain fallback text.
+        > Alert blocks now flow through a dedicated AST plugin that keeps the alert kind and quoted body markdown in sync with preview editing.
         >
-        > - alerts keep nested markdown content
-        > - quote styling stays consistent inside rich block hosts
+        > - switch between note, tip, warning, or danger in the structured editor
+        > - keep nested markdown body content intact
+
+        > [!TIP]
+        > Use preview editing on this callout to change the alert kind without manually rewriting the `> [!...]` header or each quote marker.
 
         :::info Renderer status
-        Custom containers render as neutral callout surfaces with the container label and optional arguments preserved.
+        Custom containers now flow through a dedicated plugin that keeps the type token, optional arguments, and markdown body separated in the editor surface.
         :::
+
+        :::warning Migration note
+        Mermaid-specific custom containers still belong to the Mermaid plugin, while generic documentation callouts can stay here.
+        :::
+
+        ## Footer
+
+        ^^ Footer blocks now route through a dedicated plugin and keep the `^^` source prefix out of the editor surface.
+        ^^ Use them for closing notes, provenance, or lightweight release context.
 
         ## Definitions, abbreviations, and math
 
@@ -665,8 +705,23 @@ public partial class MainWindow : Window
         :   The renderer maps `Markdig` extension nodes to native Avalonia surfaces instead of losing their semantics.
         :   Definitions can span multiple paragraphs or nested blocks.
 
+            - glossary layouts now come from a dedicated definition-list AST plugin
+            - preview editing can add or remove full entries
+
         AST
-        :   `*[AST]: Abstract syntax tree`
+        Abstract syntax tree
+        :   A structured model used for rich rendering and editing.
+
+        Fluent glossary
+        Reference rail
+        :   Definition-list entries render as a two-column glossary surface instead of plain indented text.
+
+            ```json
+            {
+              "feature": "definition-lists",
+              "mode": "plugin-backed"
+            }
+            ```
 
         *[AST]: Abstract syntax tree
 
@@ -877,13 +932,21 @@ public partial class MainWindow : Window
         Console.WriteLine($"Active markdown features: {string.Join(", ", state.Keys)}");
         ```
 
+        ```postgresql
+        -- When TextMate does not claim the alias, the built-in syntax-highlighting plugin still renders semantic tokens.
+        select feature_name, status
+        from markdown_features
+        where renderer = 'plugin-backed'
+        order by feature_name;
+        ```
+
         ## Table
 
         | Feature         | Status | Notes |
         | :-------------- | :----: | ----: |
         | Preview surface | Ready  | Rich blocks stay constrained to the available width. |
         | Table layout    | Ready  | Alignment follows markdown while cell content wraps cleanly. |
-        | Advanced nodes  | Ready  | Alerts, containers, definitions, abbreviations, math, superscript, and subscript now render natively. |
+        | Advanced nodes  | Ready  | Alerts, figures, containers, footers, definitions, abbreviations, math, superscript, and subscript now render natively. |
         | Mermaid plugin  | Ready  | Flowchart, sequence, state, class, ER, pie, journey, timeline, quadrant, and mind map diagrams render natively. |
         | Code fences     | Ready  | TextMate grammars are used before the built-in highlighter fallback. |
         """;

@@ -106,15 +106,22 @@ internal sealed class TextMateCodeBlockRenderingPlugin : IMarkdownBlockRendering
             return false;
         }
 
-        var code = NormalizeCode(codeBlock.Lines.ToString());
+        var code = MarkdownCodeBlockRendering.NormalizeCode(codeBlock.Lines.ToString());
         var inlines = TokenizeCode(code, grammarScope, context.RenderContext);
         if (inlines is null)
         {
             return false;
         }
 
-        var lineCount = string.IsNullOrEmpty(code) ? 0 : code.Split('\n').Length;
-        var codeSurface = CreateCodeSurface(inlines, languageHint, lineCount, context.RenderContext);
+        var lineCount = string.IsNullOrEmpty(code) ? 0 : code.Split('\n', StringSplitOptions.None).Length;
+        var codeSurface = MarkdownCodeBlockRendering.CreateSurface(
+            codeBlock,
+            code,
+            inlines,
+            languageHint,
+            lineCount == 1 ? "1 line • TextMate" : $"{lineCount} lines • TextMate",
+            context.RenderContext,
+            textForeground: context.RenderContext.Foreground);
         context.AddBlockControl(codeSurface.Control, codeSurface.HitTestHandler);
         return true;
     }
@@ -412,7 +419,7 @@ internal sealed class TextMateCodeBlockRenderingPlugin : IMarkdownBlockRendering
 
     internal static string? ResolveExtension(string? languageHint)
     {
-        var normalized = NormalizeLanguageHint(languageHint);
+        var normalized = MarkdownCodeBlockRendering.NormalizeLanguageHint(languageHint);
         if (string.IsNullOrWhiteSpace(normalized))
         {
             return null;
@@ -428,7 +435,7 @@ internal sealed class TextMateCodeBlockRenderingPlugin : IMarkdownBlockRendering
 
     internal static bool IsMermaidLanguage(string? languageHint)
     {
-        return MermaidLanguageAliases.Contains(NormalizeLanguageHint(languageHint));
+        return MermaidLanguageAliases.Contains(MarkdownCodeBlockRendering.NormalizeLanguageHint(languageHint));
     }
 
     internal static string NormalizeCode(string code)

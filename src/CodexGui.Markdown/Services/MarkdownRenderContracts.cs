@@ -187,6 +187,7 @@ public sealed class MarkdownBlockRenderingPluginContext
 
     internal MarkdownBlockRenderingPluginContext(
         Block block,
+        MarkdownParseResult parseResult,
         MarkdownRenderContext renderContext,
         InlineCollection output,
         int quoteDepth,
@@ -196,6 +197,7 @@ public sealed class MarkdownBlockRenderingPluginContext
         Func<string?, Uri?> resolveUri)
     {
         Block = block;
+        ParseResult = parseResult;
         RenderContext = renderContext;
         Output = output;
         QuoteDepth = quoteDepth;
@@ -206,6 +208,8 @@ public sealed class MarkdownBlockRenderingPluginContext
     }
 
     public Block Block { get; }
+
+    public MarkdownParseResult ParseResult { get; }
 
     public MarkdownRenderContext RenderContext { get; }
 
@@ -242,6 +246,7 @@ public sealed class MarkdownInlineRenderingPluginContext
 
     internal MarkdownInlineRenderingPluginContext(
         MarkdownInline inline,
+        MarkdownParseResult parseResult,
         MarkdownRenderContext renderContext,
         InlineCollection output,
         int quoteDepth,
@@ -251,6 +256,7 @@ public sealed class MarkdownInlineRenderingPluginContext
         Func<string?, Uri?> resolveUri)
     {
         Inline = inline;
+        ParseResult = parseResult;
         RenderContext = renderContext;
         Output = output;
         QuoteDepth = quoteDepth;
@@ -261,6 +267,8 @@ public sealed class MarkdownInlineRenderingPluginContext
     }
 
     public MarkdownInline Inline { get; }
+
+    public MarkdownParseResult ParseResult { get; }
 
     public MarkdownRenderContext RenderContext { get; }
 
@@ -368,6 +376,11 @@ public enum MarkdownEditorFeature
     TextStyle,
     List,
     Table,
+    Alert,
+    CustomContainer,
+    Figure,
+    DefinitionList,
+    Footer,
     Code,
     Math,
     Mermaid

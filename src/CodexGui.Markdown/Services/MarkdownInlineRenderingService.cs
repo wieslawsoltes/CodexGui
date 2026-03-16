@@ -51,18 +51,6 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private static readonly IBrush CodeHeaderBackground = new SolidColorBrush(Color.Parse("#EAEEF2"));
     private static readonly IBrush TableHeaderBackground = new SolidColorBrush(Color.Parse("#F3F4F6"));
     private static readonly IBrush TableAlternateRowBackground = new SolidColorBrush(Color.Parse("#FBFCFD"));
-    private static readonly IBrush NeutralCalloutAccentBrush = new SolidColorBrush(Color.Parse("#64748B"));
-    private static readonly IBrush NeutralCalloutBackground = new SolidColorBrush(Color.Parse("#F8FAFC"));
-    private static readonly IBrush NoteAccentBrush = new SolidColorBrush(Color.Parse("#2563EB"));
-    private static readonly IBrush NoteBackground = new SolidColorBrush(Color.Parse("#EFF6FF"));
-    private static readonly IBrush SuccessAccentBrush = new SolidColorBrush(Color.Parse("#059669"));
-    private static readonly IBrush SuccessBackground = new SolidColorBrush(Color.Parse("#ECFDF5"));
-    private static readonly IBrush WarningAccentBrush = new SolidColorBrush(Color.Parse("#D97706"));
-    private static readonly IBrush WarningBackground = new SolidColorBrush(Color.Parse("#FFFBEB"));
-    private static readonly IBrush DangerAccentBrush = new SolidColorBrush(Color.Parse("#DC2626"));
-    private static readonly IBrush DangerBackground = new SolidColorBrush(Color.Parse("#FEF2F2"));
-    private static readonly IBrush ImportantAccentBrush = new SolidColorBrush(Color.Parse("#7C3AED"));
-    private static readonly IBrush ImportantBackground = new SolidColorBrush(Color.Parse("#F5F3FF"));
     private static readonly HashSet<string> CommonCodeKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
         "abstract", "as", "async", "await", "base", "break", "case", "catch", "class", "const", "continue",
@@ -330,6 +318,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
             var pluginContext = new MarkdownBlockRenderingPluginContext(
                 block,
+                state.ParseResult,
                 state.Options,
                 state.Output,
                 state.QuoteDepth,
@@ -759,103 +748,25 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
     private static void RenderCodeBlock(CodeBlock block, RenderState state, string? languageHint)
     {
-        var code = NormalizeMarkdownLineText(block.Lines.ToString());
-        var inlines = new InlineCollection();
-        PopulateHighlightedCodeInlines(inlines, code, languageHint, block);
+        var code = MarkdownCodeBlockRendering.NormalizeCode(block.Lines.ToString());
+        var inlines = CreatePlainCodeInlines(code, block);
+        var lineCount = string.IsNullOrEmpty(code) ? 0 : code.Split('\n', StringSplitOptions.None).Length;
+        var surface = MarkdownCodeBlockRendering.CreateSurface(
+            block,
+            code,
+            inlines,
+            languageHint,
+            lineCount == 1 ? "1 line" : $"{lineCount} lines",
+            state.Options,
+            textForeground: CodeTextForeground,
+            metaForeground: QuoteForeground);
 
-        var codeText = new SelectableTextBlock
-        {
-            FontFamily = MonospaceFamily,
-            FontSize = Math.Max(state.Options.FontSize - 1, 12),
-            Foreground = CodeTextForeground,
-            TextWrapping = state.Options.TextWrapping == TextWrapping.NoWrap ? TextWrapping.NoWrap : TextWrapping.Wrap,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            Inlines = inlines
-        };
-
-        Control codeContent = state.Options.TextWrapping == TextWrapping.NoWrap
-            ? new ScrollViewer
-            {
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                Content = codeText
-            }
-            : codeText;
-
-        var headerGrid = new Grid
-        {
-            ColumnDefinitions =
-            {
-                new ColumnDefinition { Width = GridLength.Auto },
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-            },
-            ColumnSpacing = 12
-        };
-        headerGrid.Children.Add(new TextBlock
-        {
-            Text = FormatLanguageLabel(languageHint),
-            FontWeight = FontWeight.SemiBold,
-            Foreground = QuoteForeground
-        });
-
-        var lineCount = string.IsNullOrEmpty(code) ? 0 : code.Split('\n').Length;
-        var metaText = new TextBlock
-        {
-            Text = lineCount == 1 ? "1 line" : $"{lineCount} lines",
-            Foreground = QuoteForeground,
-            HorizontalAlignment = HorizontalAlignment.Right
-        };
-        Grid.SetColumn(metaText, 1);
-        headerGrid.Children.Add(metaText);
-
-        var bodyBorder = new Border
-        {
-            Padding = new Thickness(12, 10),
-            Child = codeContent
-        };
-
-        var layout = new Grid
-        {
-            RowDefinitions =
-            {
-                new RowDefinition { Height = GridLength.Auto },
-                new RowDefinition { Height = GridLength.Auto }
-            }
-        };
-
-        var headerBorder = new Border
-        {
-            Background = CodeHeaderBackground,
-            Padding = new Thickness(12, 8),
-            Child = headerGrid
-        };
-        layout.Children.Add(headerBorder);
-
-        Grid.SetRow(bodyBorder, 1);
-        layout.Children.Add(bodyBorder);
-
-        var codeBorder = new Border
-        {
-            Background = SurfaceBackground,
-            BorderBrush = SurfaceBorderBrush,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            ClipToBounds = true,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            Child = layout
-        };
-
-        var lineHitTargets = BuildCodeLineHitTargets(code, block);
-        state.Output.Add(CreateInlineControlContainer(
-            CreateRichBlockHost(codeBorder, state),
-            state.SourceObject,
-            MarkdownRenderedElementKind.BlockControl,
-            hitTestHandler: CreateCodeBlockHitTestHandler(block, headerBorder, bodyBorder, codeText, lineHitTargets)));
+        AddRichBlockControl(state, surface.Control, surface.HitTestHandler);
     }
 
     private static void RenderAlertBlock(AlertBlock alert, RenderState state)
     {
-        var presentation = ResolveCalloutPresentation(alert.Kind.ToString(), fallbackTitle: "Alert");
+        var presentation = MarkdownCalloutRendering.ResolvePresentation(alert.Kind.ToString(), fallbackTitle: "Alert");
         var body = CreateRenderedTextBlock(
             state,
             alert,
@@ -863,7 +774,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
         AddRichBlockControl(
             state,
-            CreateCalloutSurface(
+            MarkdownCalloutRendering.CreateCalloutSurface(
                 presentation.Title,
                 subtitle: null,
                 body,
@@ -951,11 +862,11 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     {
         var label = string.IsNullOrWhiteSpace(customContainer.Info)
             ? "Container"
-            : FormatContainerLabel(customContainer.Info);
+            : MarkdownCalloutRendering.FormatLabel(customContainer.Info);
         var subtitle = string.IsNullOrWhiteSpace(customContainer.Arguments)
             ? null
             : customContainer.Arguments.Trim();
-        var presentation = ResolveCalloutPresentation(customContainer.Info, fallbackTitle: label);
+        var presentation = MarkdownCalloutRendering.ResolvePresentation(customContainer.Info, fallbackTitle: label);
         var body = CreateRenderedTextBlock(
             state,
             customContainer,
@@ -963,7 +874,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
         AddRichBlockControl(
             state,
-            CreateCalloutSurface(
+            MarkdownCalloutRendering.CreateCalloutSurface(
                 presentation.Title,
                 subtitle,
                 body,
@@ -1270,6 +1181,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
             var pluginContext = new MarkdownInlineRenderingPluginContext(
                 inline,
+                state.ParseResult,
                 state.Options,
                 output,
                 state.QuoteDepth,
@@ -1662,69 +1574,6 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         };
     }
 
-    private static Control CreateCalloutSurface(
-        string title,
-        string? subtitle,
-        Control body,
-        IBrush accentBrush,
-        IBrush background)
-    {
-        var contentPanel = new StackPanel
-        {
-            Spacing = 8,
-            Margin = new Thickness(12)
-        };
-
-        contentPanel.Children.Add(new TextBlock
-        {
-            Text = title,
-            FontWeight = FontWeight.SemiBold,
-            Foreground = accentBrush,
-            TextWrapping = TextWrapping.Wrap
-        });
-
-        if (!string.IsNullOrWhiteSpace(subtitle))
-        {
-            contentPanel.Children.Add(new TextBlock
-            {
-                Text = subtitle,
-                FontSize = 12,
-                Foreground = QuoteForeground,
-                TextWrapping = TextWrapping.Wrap
-            });
-        }
-
-        contentPanel.Children.Add(body);
-
-        var layout = new Grid
-        {
-            ColumnDefinitions =
-            {
-                new ColumnDefinition { Width = GridLength.Auto },
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-            }
-        };
-
-        layout.Children.Add(new Border
-        {
-            Width = 4,
-            Background = accentBrush
-        });
-
-        Grid.SetColumn(contentPanel, 1);
-        layout.Children.Add(contentPanel);
-
-        return new Border
-        {
-            Background = background,
-            BorderBrush = SurfaceBorderBrush,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            ClipToBounds = true,
-            Child = layout
-        };
-    }
-
     private static void AppendInlineAdornment(
         InlineCollection output,
         string text,
@@ -1800,37 +1649,29 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         };
     }
 
-    private static void AddRichBlockControl(RenderState state, Control content)
+    private static void AddRichBlockControl(RenderState state, Control content, MarkdownVisualHitTestHandler? hitTestHandler = null)
     {
         state.Output.Add(CreateInlineControlContainer(
             CreateRichBlockHost(content, state),
             state.SourceObject,
-            MarkdownRenderedElementKind.BlockControl));
+            MarkdownRenderedElementKind.BlockControl,
+            hitTestHandler: hitTestHandler));
     }
 
-    private static CalloutPresentation ResolveCalloutPresentation(string? kind, string fallbackTitle)
+    private static InlineCollection CreatePlainCodeInlines(string code, MarkdownObject sourceObject)
     {
-        var normalizedKind = kind?.Trim().ToLowerInvariant();
-        var title = string.IsNullOrWhiteSpace(kind) ? fallbackTitle : FormatContainerLabel(kind);
-
-        return normalizedKind switch
+        var inlines = new InlineCollection();
+        var lines = code.Split('\n', StringSplitOptions.None);
+        for (var index = 0; index < lines.Length; index++)
         {
-            "caution" or "warning" => new CalloutPresentation(title, WarningAccentBrush, WarningBackground),
-            "danger" or "error" => new CalloutPresentation(title, DangerAccentBrush, DangerBackground),
-            "important" => new CalloutPresentation(title, ImportantAccentBrush, ImportantBackground),
-            "success" or "tip" => new CalloutPresentation(title, SuccessAccentBrush, SuccessBackground),
-            "info" or "note" => new CalloutPresentation(title, NoteAccentBrush, NoteBackground),
-            _ => new CalloutPresentation(title, NeutralCalloutAccentBrush, NeutralCalloutBackground)
-        };
-    }
+            inlines.Add(AttachElementInfo(new Run(lines[index]), sourceObject, MarkdownRenderedElementKind.Text));
+            if (index < lines.Length - 1)
+            {
+                inlines.Add(AttachElementInfo(new LineBreak(), sourceObject, MarkdownRenderedElementKind.LineBreak));
+            }
+        }
 
-    private static string FormatContainerLabel(string value)
-    {
-        var normalized = value
-            .Trim()
-            .Replace('-', ' ')
-            .Replace('_', ' ');
-        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(normalized.ToLowerInvariant());
+        return inlines;
     }
 
     private static Control CreateQuoteDecoratedBlock(Control content, int quoteDepth)
@@ -3144,8 +2985,6 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private sealed record HighlightedCodeLine(List<HighlightedCodeSpan> Spans);
 
     private sealed record HighlightedCodeSpan(string Text, IBrush? Foreground, FontWeight? FontWeight);
-
-    private readonly record struct CalloutPresentation(string Title, IBrush AccentBrush, IBrush Background);
 
     private enum CodeLanguageFamily
     {
