@@ -633,6 +633,12 @@ public partial class MainWindow : Window
 
     private const string DefaultMarkdownDocument =
         """
+        ---
+        title: CodexGui Markdown Control Showcase
+        owner: preview-team
+        summary: Rich markdown rendering, editing, and metadata support in Avalonia.
+        ---
+
         # CodexGui Markdown Control Showcase
 
         Edit markdown on the **left** and preview the rendered output on the **right**.
@@ -644,16 +650,19 @@ public partial class MainWindow : Window
         - Markdown foldings for headings and fenced code blocks.
         - Plugin-based preview rendering for Mermaid diagrams, alert callouts, built-in syntax highlighting, and code fences.
         - AST-backed rendering for alerts, figures, custom containers, definition lists, footers, and math plus native abbreviations.
-        - Optional in-place preview editing for alerts, figures, custom containers, footers, paragraphs, headings, lists, tables, code blocks, Mermaid diagrams, and math nodes.
+        - Optional in-place preview editing for alerts, figures, custom containers, footers, paragraphs, headings, lists, tables, code blocks, Mermaid diagrams, math nodes, footnotes, abbreviations, link references, and YAML front matter.
         - In-place text editing for paragraphs, headings, and list items with one editor surface per block plus formatting actions.
+        - Emoji shortcodes, smart punctuation, marked text, and inserted text now render with dedicated inline styling.
         - Insert new markdown blocks before or after the active block while editing in the preview.
         - Native `File` menu with New/Open/Save/Save As.
 
         ## Links and footnotes
 
-        Read the [Avalonia documentation](https://docs.avaloniaui.net) or the [Markdig repository](https://github.com/xoofx/markdig) for parser details.[^rendering]
+        Read the [Avalonia documentation][avalonia-docs] or the [Markdig repository](https://github.com/xoofx/markdig) for parser details.[^rendering]
 
         [^rendering]: Footnotes render as numbered references and are collected at the end of the document.
+
+        [avalonia-docs]: https://docs.avaloniaui.net "Avalonia documentation"
 
         ## Images
 
@@ -726,6 +735,14 @@ public partial class MainWindow : Window
         *[AST]: Abstract syntax tree
 
         The markdown AST keeps inline abbreviations like AST, superscript like x^^2^^, subscript like H~2~O, and inline math such as $a^2 + b^2 = c^2$, $\frac{\alpha + \beta}{2}$, and $\hat{x}_{n+1} = \sqrt{1 + x_n^2}$ readable in-flow.
+
+        ## Typography and inline extras
+
+        Emoji shortcodes like :sparkles: and smileys like :-) now render inline.
+
+        Smart punctuation turns "quoted copy" into typographic quotes and converts long-form dashes -- like this -- when SmartyPants is enabled.
+
+        ==Marked text== and ++inserted text++ now keep distinct inline styling instead of falling back to plain bold emphasis.
 
         $$
         \int_0^1 x^2\,dx = \frac{1}{3}
@@ -946,7 +963,7 @@ public partial class MainWindow : Window
         | :-------------- | :----: | ----: |
         | Preview surface | Ready  | Rich blocks stay constrained to the available width. |
         | Table layout    | Ready  | Alignment follows markdown while cell content wraps cleanly. |
-        | Advanced nodes  | Ready  | Alerts, figures, containers, footers, definitions, abbreviations, math, superscript, and subscript now render natively. |
+        | Advanced nodes  | Ready  | Alerts, figures, containers, footers, definitions, abbreviations, footnotes, link references, YAML metadata, math, superscript, subscript, emoji, smart punctuation, mark, and insert now render natively. |
         | Mermaid plugin  | Ready  | Flowchart, sequence, state, class, ER, pie, journey, timeline, quadrant, and mind map diagrams render natively. |
         | Code fences     | Ready  | TextMate grammars are used before the built-in highlighter fallback. |
         """;

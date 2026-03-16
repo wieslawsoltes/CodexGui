@@ -1,4 +1,5 @@
 using Markdig;
+using Markdig.Extensions.Yaml;
 using Markdig.Syntax;
 
 namespace CodexGui.Markdown.Services;
@@ -16,7 +17,13 @@ public sealed class MarkdownParsingService : IMarkdownParsingService
 
         var builder = new MarkdownPipelineBuilder()
             .UsePreciseSourceLocation()
-            .UseAdvancedExtensions();
+            .UseAdvancedExtensions()
+            .UseEmojiAndSmiley()
+            .UseSmartyPants()
+            .Use(new YamlFrontMatterExtension
+            {
+                AllowInMiddleOfDocument = true
+            });
 
         foreach (var parserPlugin in _parserPlugins)
         {

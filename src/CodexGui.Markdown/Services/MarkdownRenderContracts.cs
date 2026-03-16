@@ -376,12 +376,16 @@ public enum MarkdownEditorFeature
     TextStyle,
     List,
     Table,
+    YamlFrontMatter,
     Alert,
     CustomContainer,
     Figure,
     DefinitionList,
+    Abbreviation,
     Footer,
     Code,
+    LinkReference,
+    Footnote,
     Math,
     Mermaid
 }

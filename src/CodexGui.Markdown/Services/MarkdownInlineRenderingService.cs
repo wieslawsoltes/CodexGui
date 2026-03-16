@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using Avalonia;
@@ -17,9 +18,11 @@ using Markdig.Extensions.Abbreviations;
 using Markdig.Extensions.Alerts;
 using Markdig.Extensions.CustomContainers;
 using Markdig.Extensions.DefinitionLists;
+using Markdig.Extensions.Emoji;
 using Markdig.Extensions.Figures;
 using Markdig.Extensions.Footnotes;
 using Markdig.Extensions.Footers;
+using Markdig.Extensions.SmartyPants;
 using Markdig.Extensions.Tables;
 using Markdig.Extensions.TaskLists;
 using Markdig.Extensions.Yaml;
@@ -39,6 +42,8 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private static readonly IBrush SurfaceBorderBrush = new SolidColorBrush(Color.Parse("#D0D7DE"));
     private static readonly IBrush QuoteAccentBrush = new SolidColorBrush(Color.Parse("#D8DEE4"));
     private static readonly IBrush CodeTextForeground = new SolidColorBrush(Color.Parse("#1F2328"));
+    private static readonly IBrush MarkedTextBackground = new SolidColorBrush(Color.Parse("#FFF1B8"));
+    private static readonly IBrush InsertedTextForeground = new SolidColorBrush(Color.Parse("#116329"));
     private static readonly IBrush CodeKeywordForeground = new SolidColorBrush(Color.Parse("#CF222E"));
     private static readonly IBrush CodeTypeForeground = new SolidColorBrush(Color.Parse("#8250DF"));
     private static readonly IBrush CodeStringForeground = new SolidColorBrush(Color.Parse("#0A3069"));
@@ -51,6 +56,11 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private static readonly IBrush CodeHeaderBackground = new SolidColorBrush(Color.Parse("#EAEEF2"));
     private static readonly IBrush TableHeaderBackground = new SolidColorBrush(Color.Parse("#F3F4F6"));
     private static readonly IBrush TableAlternateRowBackground = new SolidColorBrush(Color.Parse("#FBFCFD"));
+    private static readonly IReadOnlyDictionary<SmartyPantType, string> SmartyPantMapping =
+        new Dictionary<SmartyPantType, string>(
+            new SmartyPantOptions()
+                .Mapping
+                .ToDictionary(static pair => pair.Key, static pair => WebUtility.HtmlDecode(pair.Value)));
     private static readonly HashSet<string> CommonCodeKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
         "abstract", "as", "async", "await", "base", "break", "case", "catch", "class", "const", "continue",
@@ -114,6 +124,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             sourceObject: null);
 
         RenderBlockSequence(parseResult.Document, state, lineBreaksBetweenBlocks: 2);
+        RenderDeferredMetadataSections(state);
         TrimTrailingLineBreaks(renderedInlines);
 
         return new MarkdownRenderResult(
@@ -174,7 +185,8 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             case Table table:
                 RenderTableBlock(table, blockState);
                 break;
-            case YamlFrontMatterBlock:
+            case YamlFrontMatterBlock yamlFrontMatterBlock:
+                RenderYamlFrontMatterBlock(yamlFrontMatterBlock, blockState);
                 break;
             case FencedCodeBlock fencedCode:
                 RenderCodeBlock(fencedCode, blockState, fencedCode.Info);
@@ -990,6 +1002,23 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         AppendStyledRun(state.Output, html, sourceObject: state.SourceObject, fontFamily: MonospaceFamily, foreground: QuoteForeground);
     }
 
+    private static void RenderYamlFrontMatterBlock(YamlFrontMatterBlock yamlFrontMatterBlock, RenderState state)
+    {
+        var yaml = MarkdownCodeBlockRendering.NormalizeCode(yamlFrontMatterBlock.Lines.ToString());
+        var inlines = CreatePlainCodeInlines(yaml, yamlFrontMatterBlock);
+        var surface = MarkdownCodeBlockRendering.CreateSurface(
+            yamlFrontMatterBlock,
+            yaml,
+            inlines,
+            languageHint: "yaml",
+            metaText: "Front matter",
+            state.Options,
+            textForeground: CodeTextForeground,
+            metaForeground: QuoteForeground);
+
+        AddRichBlockControl(state, surface.Control, surface.HitTestHandler);
+    }
+
     private static void RenderFootnoteGroup(FootnoteGroup footnoteGroup, RenderState state)
     {
         var footnotes = footnoteGroup
@@ -1059,6 +1088,135 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         }
     }
 
+    private static void RenderDeferredMetadataSections(RenderState state)
+    {
+        var linkReferences = GetUserLinkReferenceDefinitions(state.ParseResult.Document);
+        var abbreviations = GetDocumentAbbreviations(state.ParseResult.Document);
+        if (linkReferences.Count == 0 && abbreviations.Count == 0)
+        {
+            return;
+        }
+
+        if (state.Output.Count > 0)
+        {
+            AppendLineBreaks(state.Output, 2, sourceObject: null);
+        }
+
+        var renderedSection = false;
+        if (linkReferences.Count > 0)
+        {
+            RenderMetadataSectionHeading("Link references", linkReferences[0], state);
+            renderedSection = true;
+            for (var index = 0; index < linkReferences.Count; index++)
+            {
+                if (index > 0)
+                {
+                    AppendLineBreaks(state.Output, 1, linkReferences[index]);
+                }
+
+                RenderLinkReferenceDefinition(linkReferences[index], state.WithSource(linkReferences[index]));
+            }
+        }
+
+        if (abbreviations.Count > 0)
+        {
+            if (renderedSection)
+            {
+                AppendLineBreaks(state.Output, 2, abbreviations[0]);
+            }
+
+            RenderMetadataSectionHeading("Abbreviations", abbreviations[0], state);
+            for (var index = 0; index < abbreviations.Count; index++)
+            {
+                if (index > 0)
+                {
+                    AppendLineBreaks(state.Output, 1, abbreviations[index]);
+                }
+
+                RenderAbbreviationDefinition(abbreviations[index], state.WithSource(abbreviations[index]));
+            }
+        }
+    }
+
+    private static List<LinkReferenceDefinition> GetUserLinkReferenceDefinitions(MarkdownDocument document)
+    {
+        return document
+            .OfType<LinkReferenceDefinitionGroup>()
+            .SelectMany(static group => group.Links.Values)
+            .Where(static definition => definition.GetType() == typeof(LinkReferenceDefinition) && !string.IsNullOrWhiteSpace(definition.Label))
+            .OrderBy(static definition => definition.Span.Start)
+            .ToList();
+    }
+
+    private static List<Abbreviation> GetDocumentAbbreviations(MarkdownDocument document)
+    {
+        var definitions = AbbreviationHelper.GetAbbreviations(document);
+        return definitions is null
+            ? []
+            : definitions.Values
+                .Where(static abbreviation => !string.IsNullOrWhiteSpace(abbreviation.Label) && abbreviation.Span.Start >= 0)
+                .OrderBy(static abbreviation => abbreviation.Span.Start)
+                .ToList();
+    }
+
+    private static void RenderMetadataSectionHeading(string title, MarkdownObject sourceObject, RenderState state)
+    {
+        AppendStyledRun(
+            state.Output,
+            title,
+            sourceObject: sourceObject,
+            fontWeight: FontWeight.SemiBold,
+            foreground: QuoteForeground);
+        AppendLineBreaks(state.Output, 1, sourceObject);
+    }
+
+    private static void RenderLinkReferenceDefinition(LinkReferenceDefinition definition, RenderState state)
+    {
+        var body = new StackPanel
+        {
+            Spacing = 6,
+            Children =
+            {
+                CreateMetadataBodyTextBlock(
+                    definition.Url,
+                    state,
+                    fontFamily: MonospaceFamily,
+                    foreground: LinkForeground)
+            }
+        };
+
+        if (!string.IsNullOrWhiteSpace(definition.Title))
+        {
+            body.Children.Add(CreateMetadataBodyTextBlock(definition.Title, state, foreground: QuoteForeground));
+        }
+
+        AddRichBlockControl(
+            state,
+            CreateMetadataCard(
+                $"[{definition.Label}]",
+                "Reference definition",
+                body));
+    }
+
+    private static void RenderAbbreviationDefinition(Abbreviation abbreviation, RenderState state)
+    {
+        var body = new StackPanel
+        {
+            Spacing = 6,
+            Children =
+            {
+                CreateMetadataBodyTextBlock(abbreviation.Text.ToString(), state)
+            }
+        };
+
+        AddRichBlockControl(
+            state,
+            CreateMetadataCard(
+                abbreviation.Label ?? "Abbreviation",
+                "Abbreviation definition",
+                body));
+    }
+
     private static void RenderLeafFallback(LeafBlock leafBlock, RenderState state)
     {
         AppendQuotePrefix(state);
@@ -1113,6 +1271,9 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
         switch (inline)
         {
+            case EmojiInline emojiInline:
+                AppendStyledRun(output, emojiInline.ToString(), sourceObject: inlineState.SourceObject);
+                break;
             case LiteralInline literal:
                 AppendStyledRun(output, literal.Content.ToString(), sourceObject: inlineState.SourceObject);
                 break;
@@ -1146,6 +1307,9 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                 break;
             case FootnoteLink footnoteLink:
                 RenderFootnoteLink(footnoteLink, output, inlineState);
+                break;
+            case SmartyPant smartyPant:
+                AppendStyledRun(output, ResolveSmartyPantText(smartyPant), sourceObject: inlineState.SourceObject);
                 break;
             case HtmlInline htmlInline:
                 AppendStyledRun(output, htmlInline.Tag, sourceObject: inlineState.SourceObject, fontFamily: MonospaceFamily, foreground: QuoteForeground);
@@ -1228,6 +1392,34 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             return;
         }
 
+        if (emphasis.DelimiterChar == '=' && emphasis.DelimiterCount >= 2)
+        {
+            var marked = new Span
+            {
+                Background = MarkedTextBackground,
+                FontWeight = FontWeight.Medium
+            };
+            AttachElementInfo(marked, state.SourceObject, MarkdownRenderedElementKind.Text);
+
+            RenderInlineContainer(emphasis, marked.Inlines, state, skipLeadingTaskInline: false);
+            output.Add(marked);
+            return;
+        }
+
+        if (emphasis.DelimiterChar == '+' && emphasis.DelimiterCount >= 2)
+        {
+            var inserted = new Span
+            {
+                Foreground = InsertedTextForeground,
+                TextDecorations = Avalonia.Media.TextDecorations.Underline
+            };
+            AttachElementInfo(inserted, state.SourceObject, MarkdownRenderedElementKind.Text);
+
+            RenderInlineContainer(emphasis, inserted.Inlines, state, skipLeadingTaskInline: false);
+            output.Add(inserted);
+            return;
+        }
+
         if (emphasis.DelimiterCount >= 2)
         {
             var bold = new Bold();
@@ -1274,6 +1466,25 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                     state,
                     BaselineAlignment.Subscript,
                     fontSize: Math.Max(state.Options.FontSize - 2, 10));
+                return;
+            case '=' when emphasisDelimiter.DelimiterCount >= 2:
+                AppendInlineAdornment(
+                    output,
+                    text,
+                    state,
+                    BaselineAlignment.Baseline,
+                    fontWeight: FontWeight.Medium,
+                    background: MarkedTextBackground,
+                    padding: new Thickness(2, 0));
+                return;
+            case '+' when emphasisDelimiter.DelimiterCount >= 2:
+                AppendInlineAdornment(
+                    output,
+                    text,
+                    state,
+                    BaselineAlignment.Baseline,
+                    foreground: InsertedTextForeground,
+                    textDecorations: Avalonia.Media.TextDecorations.Underline);
                 return;
             default:
                 RenderInlineContainer(emphasisDelimiter, output, state, skipLeadingTaskInline: false);
@@ -1431,6 +1642,9 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     {
         switch (inline)
         {
+            case EmojiInline emojiInline:
+                builder.Append(emojiInline.ToString());
+                break;
             case LiteralInline literal:
                 builder.Append(literal.Content.ToString());
                 break;
@@ -1471,6 +1685,9 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             case HtmlEntityInline htmlEntity:
                 builder.Append(htmlEntity.Transcoded.ToString());
                 break;
+            case SmartyPant smartyPant:
+                builder.Append(ResolveSmartyPantText(smartyPant));
+                break;
             case TaskList task:
                 builder.Append(task.Checked ? "[x]" : "[ ]");
                 break;
@@ -1493,6 +1710,11 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
             ? parsed
             : 1;
+    }
+
+    private static string ResolveSmartyPantText(SmartyPant smartyPant)
+    {
+        return SmartyPantMapping.TryGetValue(smartyPant.Type, out var text) ? text : smartyPant.ToString();
     }
 
     private static string NormalizeMarkdownLineText(string text)
@@ -1707,6 +1929,73 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         Grid.SetColumn(content, 1);
         grid.Children.Add(content);
         return grid;
+    }
+
+    private static Control CreateMetadataCard(string title, string subtitle, Control body)
+    {
+        var header = new Border
+        {
+            Background = CodeHeaderBackground,
+            Padding = new Thickness(12, 8),
+            Child = new StackPanel
+            {
+                Spacing = 2,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = title,
+                        FontWeight = FontWeight.SemiBold
+                    },
+                    new TextBlock
+                    {
+                        Text = subtitle,
+                        Foreground = QuoteForeground
+                    }
+                }
+            }
+        };
+
+        var content = new StackPanel
+        {
+            Spacing = 0,
+            Children =
+            {
+                header,
+                new Border
+                {
+                    Padding = new Thickness(12, 10),
+                    Child = body
+                }
+            }
+        };
+
+        return new Border
+        {
+            Background = SurfaceBackground,
+            BorderBrush = SurfaceBorderBrush,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            ClipToBounds = true,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Child = content
+        };
+    }
+
+    private static SelectableTextBlock CreateMetadataBodyTextBlock(
+        string? text,
+        RenderState state,
+        FontFamily? fontFamily = null,
+        IBrush? foreground = null)
+    {
+        return new SelectableTextBlock
+        {
+            Text = MarkdownSourceEditing.NormalizeBlockText(text),
+            TextWrapping = state.Options.TextWrapping == TextWrapping.NoWrap ? TextWrapping.NoWrap : TextWrapping.Wrap,
+            FontFamily = fontFamily ?? state.Options.FontFamily,
+            FontSize = state.Options.FontSize,
+            Foreground = foreground ?? state.Options.Foreground
+        };
     }
 
     private static void PopulateHighlightedCodeInlines(InlineCollection output, string code, string? languageHint, MarkdownObject? sourceObject)

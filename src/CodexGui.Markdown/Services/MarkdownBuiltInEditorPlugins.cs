@@ -23,6 +23,10 @@ public static class MarkdownBuiltInEditorIds
     public const string List = "built-in-list-editor";
     public const string Table = "built-in-table-editor";
     public const string Code = "built-in-code-editor";
+    public const string YamlFrontMatter = "built-in-yaml-front-matter-editor";
+    public const string Abbreviation = "built-in-abbreviation-editor";
+    public const string LinkReference = "built-in-link-reference-editor";
+    public const string Footnote = "built-in-footnote-editor";
 }
 
 internal static class MarkdownBuiltInEditorPlugins
@@ -32,11 +36,16 @@ internal static class MarkdownBuiltInEditorPlugins
         ArgumentNullException.ThrowIfNull(registry);
         registry
             .AddBlockTemplateProvider(new BuiltInMarkdownBlockTemplateProvider())
+            .AddBlockTemplateProvider(new BuiltInMarkdownMetadataTemplateProvider())
             .AddEditorPlugin(new ParagraphMarkdownEditorPlugin())
             .AddEditorPlugin(new HeadingMarkdownEditorPlugin())
             .AddEditorPlugin(new ListMarkdownEditorPlugin())
             .AddEditorPlugin(new TableMarkdownEditorPlugin())
-            .AddEditorPlugin(new PlainCodeMarkdownEditorPlugin());
+            .AddEditorPlugin(new PlainCodeMarkdownEditorPlugin())
+            .AddEditorPlugin(new YamlFrontMatterMarkdownEditorPlugin())
+            .AddEditorPlugin(new AbbreviationMarkdownEditorPlugin())
+            .AddEditorPlugin(new LinkReferenceMarkdownEditorPlugin())
+            .AddEditorPlugin(new FootnoteMarkdownEditorPlugin());
     }
 }
 
