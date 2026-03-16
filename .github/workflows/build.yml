@@ -104,3 +104,35 @@ jobs:
           path: site/.lunet/build/www
           if-no-files-found: error
           retention-days: 14
+
+  pack:
+    name: Pack
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore CodexGui.slnx
+
+      - name: Build
+        run: dotnet build CodexGui.slnx -c Release --no-restore
+
+      - name: Pack
+        run: dotnet pack CodexGui.slnx -c Release --no-build -o artifacts/packages
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-artifacts
+          path: |
+            artifacts/packages/*.nupkg
+            artifacts/packages/*.snupkg
+          if-no-files-found: error
+          retention-days: 14
