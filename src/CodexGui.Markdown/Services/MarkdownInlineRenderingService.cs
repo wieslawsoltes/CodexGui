@@ -13,9 +13,16 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Media.TextFormatting;
 using Avalonia.Threading;
+using Markdig.Extensions.Abbreviations;
+using Markdig.Extensions.Alerts;
+using Markdig.Extensions.CustomContainers;
+using Markdig.Extensions.DefinitionLists;
+using Markdig.Extensions.Figures;
 using Markdig.Extensions.Footnotes;
+using Markdig.Extensions.Footers;
 using Markdig.Extensions.Tables;
 using Markdig.Extensions.TaskLists;
+using Markdig.Extensions.Yaml;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
@@ -44,6 +51,18 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private static readonly IBrush CodeHeaderBackground = new SolidColorBrush(Color.Parse("#EAEEF2"));
     private static readonly IBrush TableHeaderBackground = new SolidColorBrush(Color.Parse("#F3F4F6"));
     private static readonly IBrush TableAlternateRowBackground = new SolidColorBrush(Color.Parse("#FBFCFD"));
+    private static readonly IBrush NeutralCalloutAccentBrush = new SolidColorBrush(Color.Parse("#64748B"));
+    private static readonly IBrush NeutralCalloutBackground = new SolidColorBrush(Color.Parse("#F8FAFC"));
+    private static readonly IBrush NoteAccentBrush = new SolidColorBrush(Color.Parse("#2563EB"));
+    private static readonly IBrush NoteBackground = new SolidColorBrush(Color.Parse("#EFF6FF"));
+    private static readonly IBrush SuccessAccentBrush = new SolidColorBrush(Color.Parse("#059669"));
+    private static readonly IBrush SuccessBackground = new SolidColorBrush(Color.Parse("#ECFDF5"));
+    private static readonly IBrush WarningAccentBrush = new SolidColorBrush(Color.Parse("#D97706"));
+    private static readonly IBrush WarningBackground = new SolidColorBrush(Color.Parse("#FFFBEB"));
+    private static readonly IBrush DangerAccentBrush = new SolidColorBrush(Color.Parse("#DC2626"));
+    private static readonly IBrush DangerBackground = new SolidColorBrush(Color.Parse("#FEF2F2"));
+    private static readonly IBrush ImportantAccentBrush = new SolidColorBrush(Color.Parse("#7C3AED"));
+    private static readonly IBrush ImportantBackground = new SolidColorBrush(Color.Parse("#F5F3FF"));
     private static readonly HashSet<string> CommonCodeKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
         "abstract", "as", "async", "await", "base", "break", "case", "catch", "class", "const", "continue",
@@ -146,6 +165,9 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
         switch (block)
         {
+            case AlertBlock alert:
+                RenderAlertBlock(alert, blockState);
+                break;
             case HeadingBlock heading:
                 RenderHeadingBlock(heading, blockState);
                 break;
@@ -158,8 +180,13 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             case ListBlock list:
                 RenderListBlock(list, blockState);
                 break;
+            case DefinitionList definitionList:
+                RenderDefinitionList(definitionList, blockState);
+                break;
             case Table table:
                 RenderTableBlock(table, blockState);
+                break;
+            case YamlFrontMatterBlock:
                 break;
             case FencedCodeBlock fencedCode:
                 RenderCodeBlock(fencedCode, blockState, fencedCode.Info);
@@ -171,12 +198,27 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                 AppendQuotePrefix(blockState);
                 AppendStyledRun(blockState.Output, "────────────────────────────────", sourceObject: blockState.SourceObject, fontWeight: FontWeight.Medium, foreground: QuoteForeground);
                 break;
+            case CustomContainer customContainer:
+                RenderCustomContainerBlock(customContainer, blockState);
+                break;
+            case Figure figure:
+                RenderFigureBlock(figure, blockState);
+                break;
+            case FigureCaption figureCaption:
+                RenderFigureCaptionBlock(figureCaption, blockState);
+                break;
             case HtmlBlock htmlBlock:
                 RenderHtmlBlock(htmlBlock, blockState);
+                break;
+            case FooterBlock footerBlock:
+                RenderFooterBlock(footerBlock, blockState);
                 break;
             case FootnoteGroup footnoteGroup:
                 RenderFootnoteGroup(footnoteGroup, blockState);
                 break;
+            case Abbreviation:
+            case BlankLineBlock:
+            case EmptyBlock:
             case LinkReferenceDefinitionGroup:
                 break;
             case ContainerBlock container:
@@ -229,6 +271,46 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             block,
             MarkdownRenderedElementKind.BlockControl));
 
+        return true;
+    }
+
+    private static bool TryRenderActiveInlineEditor(Markdig.Syntax.Inlines.Inline inline, InlineCollection output, RenderState state)
+    {
+        if (state.Options.EditorState?.ActiveSession is not { } session)
+        {
+            return false;
+        }
+
+        if (!MarkdownSourceSpan.FromMarkdig(inline.Span).Equals(session.SourceSpan))
+        {
+            return false;
+        }
+
+        var editor = state.Options.EditorState.EditingService.CreateEditor(new MarkdownEditorRenderRequest
+        {
+            Node = inline,
+            ParseResult = state.ParseResult,
+            RenderContext = state.Options,
+            Session = session,
+            Preferences = state.Options.EditorState.Preferences,
+            AvailableWidth = ResolveInlineEditorWidth(state),
+            CommitReplacement = replacementMarkdown => state.Options.EditorState.CommitReplacement(session, replacementMarkdown),
+            InsertBlockBefore = (template, currentBlockMarkdown) => state.Options.EditorState.InsertBlockBefore(session, template, currentBlockMarkdown),
+            InsertBlockAfter = (template, currentBlockMarkdown) => state.Options.EditorState.InsertBlockAfter(session, template, currentBlockMarkdown),
+            RemoveBlock = () => state.Options.EditorState.RemoveBlock(session),
+            CancelEdit = state.Options.EditorState.CancelEdit
+        });
+
+        if (editor is null)
+        {
+            return false;
+        }
+
+        output.Add(CreateInlineControlContainer(
+            editor,
+            inline,
+            MarkdownRenderedElementKind.InlineControl,
+            BaselineAlignment.Center));
         return true;
     }
 
@@ -771,6 +853,223 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             hitTestHandler: CreateCodeBlockHitTestHandler(block, headerBorder, bodyBorder, codeText, lineHitTargets)));
     }
 
+    private static void RenderAlertBlock(AlertBlock alert, RenderState state)
+    {
+        var presentation = ResolveCalloutPresentation(alert.Kind.ToString(), fallbackTitle: "Alert");
+        var body = CreateRenderedTextBlock(
+            state,
+            alert,
+            nestedState => RenderBlockSequence(alert, nestedState, lineBreaksBetweenBlocks: 1));
+
+        AddRichBlockControl(
+            state,
+            CreateCalloutSurface(
+                presentation.Title,
+                subtitle: null,
+                body,
+                presentation.AccentBrush,
+                presentation.Background));
+    }
+
+    private static void RenderDefinitionList(DefinitionList definitionList, RenderState state)
+    {
+        var itemIndex = 0;
+        foreach (var definitionItem in definitionList.OfType<DefinitionItem>())
+        {
+            if (itemIndex > 0)
+            {
+                AppendLineBreaks(state.Output, 1, state.SourceObject);
+            }
+
+            RenderDefinitionItem(definitionItem, state.WithSource(definitionItem));
+            itemIndex++;
+        }
+    }
+
+    private static void RenderDefinitionItem(DefinitionItem definitionItem, RenderState state)
+    {
+        var terms = new List<DefinitionTerm>();
+        var contentBlocks = new List<Block>();
+
+        foreach (var child in definitionItem)
+        {
+            switch (child)
+            {
+                case DefinitionTerm definitionTerm:
+                    terms.Add(definitionTerm);
+                    break;
+                case BlankLineBlock:
+                    break;
+                default:
+                    contentBlocks.Add(child);
+                    break;
+            }
+        }
+
+        for (var termIndex = 0; termIndex < terms.Count; termIndex++)
+        {
+            if (termIndex > 0)
+            {
+                AppendLineBreaks(state.Output, 1, state.SourceObject);
+            }
+
+            RenderDefinitionTerm(terms[termIndex], state.WithSource(terms[termIndex]));
+        }
+
+        var definitionState = state.WithListDepth(state.ListDepth + 1);
+        for (var blockIndex = 0; blockIndex < contentBlocks.Count; blockIndex++)
+        {
+            AppendLineBreaks(state.Output, 1, state.SourceObject);
+            RenderBlock(contentBlocks[blockIndex], definitionState.WithSource(contentBlocks[blockIndex]));
+        }
+    }
+
+    private static void RenderDefinitionTerm(DefinitionTerm definitionTerm, RenderState state)
+    {
+        AppendQuotePrefix(state);
+        AppendListIndent(state, extraDepth: 0);
+
+        var termSpan = new Span
+        {
+            FontWeight = FontWeight.SemiBold
+        };
+        AttachElementInfo(termSpan, state.SourceObject, MarkdownRenderedElementKind.Text);
+
+        if (definitionTerm.Inline is not null)
+        {
+            RenderInlineContainer(definitionTerm.Inline, termSpan.Inlines, state, skipLeadingTaskInline: false);
+        }
+        else
+        {
+            AppendStyledRun(termSpan.Inlines, NormalizeMarkdownLineText(definitionTerm.Lines.ToString()), sourceObject: state.SourceObject, fontWeight: FontWeight.SemiBold);
+        }
+
+        state.Output.Add(termSpan);
+    }
+
+    private static void RenderCustomContainerBlock(CustomContainer customContainer, RenderState state)
+    {
+        var label = string.IsNullOrWhiteSpace(customContainer.Info)
+            ? "Container"
+            : FormatContainerLabel(customContainer.Info);
+        var subtitle = string.IsNullOrWhiteSpace(customContainer.Arguments)
+            ? null
+            : customContainer.Arguments.Trim();
+        var presentation = ResolveCalloutPresentation(customContainer.Info, fallbackTitle: label);
+        var body = CreateRenderedTextBlock(
+            state,
+            customContainer,
+            nestedState => RenderBlockSequence(customContainer, nestedState, lineBreaksBetweenBlocks: 1));
+
+        AddRichBlockControl(
+            state,
+            CreateCalloutSurface(
+                presentation.Title,
+                subtitle,
+                body,
+                presentation.AccentBrush,
+                presentation.Background));
+    }
+
+    private static void RenderFigureBlock(Figure figure, RenderState state)
+    {
+        var panel = new StackPanel
+        {
+            Spacing = 8
+        };
+
+        var body = CreateRenderedTextBlock(
+            state,
+            figure,
+            nestedState =>
+            {
+                var first = true;
+                foreach (var child in figure)
+                {
+                    if (child is FigureCaption)
+                    {
+                        continue;
+                    }
+
+                    if (!first)
+                    {
+                        AppendLineBreaks(nestedState.Output, 1, figure);
+                    }
+
+                    RenderBlock(child, nestedState.WithSource(child));
+                    first = false;
+                }
+            });
+
+        if (body.Inlines?.Count > 0)
+        {
+            panel.Children.Add(body);
+        }
+
+        if (figure.OfType<FigureCaption>().FirstOrDefault() is { } caption)
+        {
+            panel.Children.Add(CreateRenderedTextBlock(
+                state,
+                caption,
+                nestedState => RenderLeafFallback(caption, nestedState.WithSource(caption)),
+                fontSize: Math.Max(state.Options.FontSize - 1, 11),
+                foreground: QuoteForeground,
+                textAlignment: TextAlignment.Center));
+        }
+
+        if (panel.Children.Count == 0)
+        {
+            return;
+        }
+
+        AddRichBlockControl(
+            state,
+            new Border
+            {
+                Background = SurfaceBackground,
+                BorderBrush = SurfaceBorderBrush,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(12),
+                Child = panel
+            });
+    }
+
+    private static void RenderFigureCaptionBlock(FigureCaption figureCaption, RenderState state)
+    {
+        AddRichBlockControl(
+            state,
+            new Border
+            {
+                Padding = new Thickness(8, 4),
+                Child = CreateRenderedTextBlock(
+                    state,
+                    figureCaption,
+                    nestedState => RenderLeafFallback(figureCaption, nestedState.WithSource(figureCaption)),
+                    fontSize: Math.Max(state.Options.FontSize - 1, 11),
+                    foreground: QuoteForeground,
+                    textAlignment: TextAlignment.Center)
+            });
+    }
+
+    private static void RenderFooterBlock(FooterBlock footerBlock, RenderState state)
+    {
+        AddRichBlockControl(
+            state,
+            new Border
+            {
+                BorderBrush = SurfaceBorderBrush,
+                BorderThickness = new Thickness(0, 1, 0, 0),
+                Padding = new Thickness(0, 10, 0, 0),
+                Child = CreateRenderedTextBlock(
+                    state,
+                    footerBlock,
+                    nestedState => RenderBlockSequence(footerBlock, nestedState, lineBreaksBetweenBlocks: 1),
+                    fontSize: Math.Max(state.Options.FontSize - 1, 11),
+                    foreground: QuoteForeground)
+            });
+    }
+
     private static void RenderHtmlBlock(HtmlBlock htmlBlock, RenderState state)
     {
         AppendQuotePrefix(state);
@@ -891,6 +1190,11 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private static void RenderInline(Markdig.Syntax.Inlines.Inline inline, InlineCollection output, RenderState state)
     {
         var inlineState = state.WithSource(inline);
+        if (TryRenderActiveInlineEditor(inline, output, inlineState))
+        {
+            return;
+        }
+
         if (TryRenderInlineWithPlugins(inline, output, inlineState))
         {
             return;
@@ -900,6 +1204,9 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         {
             case LiteralInline literal:
                 AppendStyledRun(output, literal.Content.ToString(), sourceObject: inlineState.SourceObject);
+                break;
+            case AbbreviationInline abbreviationInline:
+                RenderAbbreviationInline(abbreviationInline, output, inlineState);
                 break;
             case CodeInline codeInline:
                 AppendStyledRun(
@@ -913,6 +1220,9 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                 AppendLineBreaks(output, 1, inlineState.SourceObject);
                 AppendQuotePrefix(inlineState);
                 AppendListIndent(inlineState, extraDepth: 0);
+                break;
+            case EmphasisDelimiterInline emphasisDelimiter:
+                RenderEmphasisDelimiterInline(emphasisDelimiter, output, inlineState);
                 break;
             case EmphasisInline emphasis:
                 RenderEmphasisInline(emphasis, output, inlineState);
@@ -1025,6 +1335,56 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         }
 
         RenderInlineContainer(emphasis, output, state, skipLeadingTaskInline: false);
+    }
+
+    private static void RenderEmphasisDelimiterInline(EmphasisDelimiterInline emphasisDelimiter, InlineCollection output, RenderState state)
+    {
+        var text = ExtractInlineText(emphasisDelimiter);
+        if (string.IsNullOrEmpty(text))
+        {
+            return;
+        }
+
+        switch (emphasisDelimiter.DelimiterChar)
+        {
+            case '^' when emphasisDelimiter.DelimiterCount >= 2:
+                AppendInlineAdornment(
+                    output,
+                    text,
+                    state,
+                    BaselineAlignment.Superscript,
+                    fontSize: Math.Max(state.Options.FontSize - 2, 10));
+                return;
+            case '~' when emphasisDelimiter.DelimiterCount == 1:
+                AppendInlineAdornment(
+                    output,
+                    text,
+                    state,
+                    BaselineAlignment.Subscript,
+                    fontSize: Math.Max(state.Options.FontSize - 2, 10));
+                return;
+            default:
+                RenderInlineContainer(emphasisDelimiter, output, state, skipLeadingTaskInline: false);
+                return;
+        }
+    }
+
+    private static void RenderAbbreviationInline(AbbreviationInline abbreviationInline, InlineCollection output, RenderState state)
+    {
+        var label = abbreviationInline.Abbreviation?.Label;
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return;
+        }
+
+        AppendInlineAdornment(
+            output,
+            label,
+            state,
+            BaselineAlignment.Baseline,
+            fontWeight: FontWeight.Medium,
+            textDecorations: Avalonia.Media.TextDecorations.Underline,
+            toolTip: abbreviationInline.Abbreviation?.Text.ToString());
     }
 
     private static void RenderLinkInline(LinkInline link, InlineCollection output, RenderState state)
@@ -1162,11 +1522,22 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             case LiteralInline literal:
                 builder.Append(literal.Content.ToString());
                 break;
+            case AbbreviationInline abbreviationInline when abbreviationInline.Abbreviation is { } abbreviation:
+                builder.Append(abbreviation.Label);
+                break;
             case CodeInline codeInline:
                 builder.Append(codeInline.Content);
                 break;
             case LineBreakInline:
                 builder.Append(' ');
+                break;
+            case EmphasisDelimiterInline emphasisDelimiter:
+                var nestedDelimiterChild = emphasisDelimiter.FirstChild;
+                while (nestedDelimiterChild is not null)
+                {
+                    AppendInlineText(builder, nestedDelimiterChild);
+                    nestedDelimiterChild = nestedDelimiterChild.NextSibling;
+                }
                 break;
             case LinkInline link:
                 var linkText = ExtractInlineText(link);
@@ -1243,9 +1614,180 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         return Math.Clamp(availableWidth, 120d, 1400d);
     }
 
+    private static double ResolveInlineEditorWidth(RenderState state)
+    {
+        var availableWidth = state.Options.AvailableWidth > 0
+            ? state.Options.AvailableWidth - (state.ListDepth * 24d)
+            : 480d;
+        return Math.Clamp(availableWidth, 180d, 720d);
+    }
+
     private static Uri? ResolveUri(MarkdownRenderContext context, string? url)
     {
         return TryResolveUri(context, url, out var resolvedUri) ? resolvedUri : null;
+    }
+
+    private static SelectableTextBlock CreateRenderedTextBlock(
+        RenderState parentState,
+        MarkdownObject? sourceObject,
+        Action<RenderState> render,
+        double? fontSize = null,
+        FontFamily? fontFamily = null,
+        IBrush? foreground = null,
+        TextAlignment textAlignment = TextAlignment.Left)
+    {
+        var inlines = new InlineCollection();
+        var nestedState = new RenderState(
+            parentState.ParseResult,
+            parentState.Options,
+            inlines,
+            quoteDepth: 0,
+            listDepth: 0,
+            parentState.BlockRenderingPlugins,
+            parentState.InlineRenderingPlugins,
+            sourceObject);
+
+        render(nestedState);
+        TrimTrailingLineBreaks(inlines);
+
+        return new SelectableTextBlock
+        {
+            FontFamily = fontFamily ?? parentState.Options.FontFamily,
+            FontSize = fontSize ?? parentState.Options.FontSize,
+            Foreground = foreground ?? parentState.Options.Foreground,
+            TextWrapping = parentState.Options.TextWrapping == TextWrapping.NoWrap ? TextWrapping.NoWrap : TextWrapping.Wrap,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            TextAlignment = textAlignment,
+            Inlines = inlines
+        };
+    }
+
+    private static Control CreateCalloutSurface(
+        string title,
+        string? subtitle,
+        Control body,
+        IBrush accentBrush,
+        IBrush background)
+    {
+        var contentPanel = new StackPanel
+        {
+            Spacing = 8,
+            Margin = new Thickness(12)
+        };
+
+        contentPanel.Children.Add(new TextBlock
+        {
+            Text = title,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = accentBrush,
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        if (!string.IsNullOrWhiteSpace(subtitle))
+        {
+            contentPanel.Children.Add(new TextBlock
+            {
+                Text = subtitle,
+                FontSize = 12,
+                Foreground = QuoteForeground,
+                TextWrapping = TextWrapping.Wrap
+            });
+        }
+
+        contentPanel.Children.Add(body);
+
+        var layout = new Grid
+        {
+            ColumnDefinitions =
+            {
+                new ColumnDefinition { Width = GridLength.Auto },
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            }
+        };
+
+        layout.Children.Add(new Border
+        {
+            Width = 4,
+            Background = accentBrush
+        });
+
+        Grid.SetColumn(contentPanel, 1);
+        layout.Children.Add(contentPanel);
+
+        return new Border
+        {
+            Background = background,
+            BorderBrush = SurfaceBorderBrush,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            ClipToBounds = true,
+            Child = layout
+        };
+    }
+
+    private static void AppendInlineAdornment(
+        InlineCollection output,
+        string text,
+        RenderState state,
+        BaselineAlignment baselineAlignment,
+        double? fontSize = null,
+        FontWeight? fontWeight = null,
+        FontStyle? fontStyle = null,
+        FontFamily? fontFamily = null,
+        IBrush? foreground = null,
+        IBrush? background = null,
+        TextDecorationCollection? textDecorations = null,
+        Thickness? padding = null,
+        string? toolTip = null)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return;
+        }
+
+        var textBlock = new TextBlock
+        {
+            Text = text,
+            FontSize = fontSize ?? state.Options.FontSize,
+            FontFamily = fontFamily ?? state.Options.FontFamily,
+            Foreground = foreground ?? state.Options.Foreground,
+            Background = Brushes.Transparent,
+            TextWrapping = TextWrapping.NoWrap
+        };
+
+        if (fontWeight.HasValue)
+        {
+            textBlock.FontWeight = fontWeight.Value;
+        }
+
+        if (fontStyle.HasValue)
+        {
+            textBlock.FontStyle = fontStyle.Value;
+        }
+
+        if (textDecorations is not null)
+        {
+            textBlock.TextDecorations = textDecorations;
+        }
+
+        Control control = textBlock;
+        if (background is not null || padding.HasValue)
+        {
+            control = new Border
+            {
+                Background = background,
+                CornerRadius = new CornerRadius(4),
+                Padding = padding ?? new Thickness(0),
+                Child = textBlock
+            };
+        }
+
+        if (!string.IsNullOrWhiteSpace(toolTip))
+        {
+            ToolTip.SetTip(control, toolTip);
+        }
+
+        output.Add(CreateInlineControlContainer(control, state.SourceObject, MarkdownRenderedElementKind.InlineControl, baselineAlignment));
     }
 
     private static Control CreateRichBlockHost(Control content, RenderState state)
@@ -1256,6 +1798,39 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Child = state.QuoteDepth > 0 ? CreateQuoteDecoratedBlock(content, state.QuoteDepth) : content
         };
+    }
+
+    private static void AddRichBlockControl(RenderState state, Control content)
+    {
+        state.Output.Add(CreateInlineControlContainer(
+            CreateRichBlockHost(content, state),
+            state.SourceObject,
+            MarkdownRenderedElementKind.BlockControl));
+    }
+
+    private static CalloutPresentation ResolveCalloutPresentation(string? kind, string fallbackTitle)
+    {
+        var normalizedKind = kind?.Trim().ToLowerInvariant();
+        var title = string.IsNullOrWhiteSpace(kind) ? fallbackTitle : FormatContainerLabel(kind);
+
+        return normalizedKind switch
+        {
+            "caution" or "warning" => new CalloutPresentation(title, WarningAccentBrush, WarningBackground),
+            "danger" or "error" => new CalloutPresentation(title, DangerAccentBrush, DangerBackground),
+            "important" => new CalloutPresentation(title, ImportantAccentBrush, ImportantBackground),
+            "success" or "tip" => new CalloutPresentation(title, SuccessAccentBrush, SuccessBackground),
+            "info" or "note" => new CalloutPresentation(title, NoteAccentBrush, NoteBackground),
+            _ => new CalloutPresentation(title, NeutralCalloutAccentBrush, NeutralCalloutBackground)
+        };
+    }
+
+    private static string FormatContainerLabel(string value)
+    {
+        var normalized = value
+            .Trim()
+            .Replace('-', ' ')
+            .Replace('_', ' ');
+        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(normalized.ToLowerInvariant());
     }
 
     private static Control CreateQuoteDecoratedBlock(Control content, int quoteDepth)
@@ -2569,6 +3144,8 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private sealed record HighlightedCodeLine(List<HighlightedCodeSpan> Spans);
 
     private sealed record HighlightedCodeSpan(string Text, IBrush? Foreground, FontWeight? FontWeight);
+
+    private readonly record struct CalloutPresentation(string Title, IBrush AccentBrush, IBrush Background);
 
     private enum CodeLanguageFamily
     {

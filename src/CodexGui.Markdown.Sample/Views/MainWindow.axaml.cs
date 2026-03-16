@@ -12,6 +12,7 @@ using Avalonia.Threading;
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.TextMate;
 using CodexGui.Markdown.Controls;
+using CodexGui.Markdown.Plugin.Math;
 using CodexGui.Markdown.Plugin.Mermaid;
 using CodexGui.Markdown.Plugin.TextMate;
 using CodexGui.Markdown.Sample.Controls;
@@ -24,6 +25,7 @@ public partial class MainWindow : Window
 {
     private static readonly IMarkdownPlugin[] PreviewPlugins =
     [
+        new MathMarkdownPlugin(),
         new MermaidMarkdownPlugin(),
         new TextMateMarkdownPlugin()
     ];
@@ -629,7 +631,8 @@ public partial class MainWindow : Window
         - TextMate-based syntax highlighting in AvaloniaEdit.
         - Markdown foldings for headings and fenced code blocks.
         - Plugin-based preview rendering for Mermaid diagrams and code fences.
-        - Optional in-place preview editing for paragraphs, headings, lists, tables, code blocks, and Mermaid diagrams.
+        - Native rendering for alerts, custom containers, definition lists, abbreviations, and AST-backed math.
+        - Optional in-place preview editing for paragraphs, headings, lists, tables, code blocks, Mermaid diagrams, and math nodes.
         - In-place text editing for paragraphs, headings, and list items with one editor surface per block plus formatting actions.
         - Insert new markdown blocks before or after the active block while editing in the preview.
         - Native `File` menu with New/Open/Save/Save As.
@@ -643,6 +646,62 @@ public partial class MainWindow : Window
         ## Images
 
         Images render inline when their source can be resolved from an absolute URL, a relative path backed by `BaseUri`, or a base64 `data:` URI.
+
+        ## Alerts and custom containers
+
+        > [!IMPORTANT]
+        > Advanced parser nodes now flow through the native renderer instead of dropping to plain fallback text.
+        >
+        > - alerts keep nested markdown content
+        > - quote styling stays consistent inside rich block hosts
+
+        :::info Renderer status
+        Custom containers render as neutral callout surfaces with the container label and optional arguments preserved.
+        :::
+
+        ## Definitions, abbreviations, and math
+
+        Rendering engine
+        :   The renderer maps `Markdig` extension nodes to native Avalonia surfaces instead of losing their semantics.
+        :   Definitions can span multiple paragraphs or nested blocks.
+
+        AST
+        :   `*[AST]: Abstract syntax tree`
+
+        *[AST]: Abstract syntax tree
+
+        The markdown AST keeps inline abbreviations like AST, superscript like x^^2^^, subscript like H~2~O, and inline math such as $a^2 + b^2 = c^2$, $\frac{\alpha + \beta}{2}$, and $\hat{x}_{n+1} = \sqrt{1 + x_n^2}$ readable in-flow.
+
+        $$
+        \int_0^1 x^2\,dx = \frac{1}{3}
+        $$
+
+        $$
+        \begin{aligned}
+        f(x) &= \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x - \mu)^2}{2\sigma^2}} \\
+        \nabla \cdot \vec{F} &= \frac{\partial P}{\partial x} + \frac{\partial Q}{\partial y} + \frac{\partial R}{\partial z}
+        \end{aligned}
+        $$
+
+        $$
+        \begin{bmatrix}
+        1 & 2 & 3 \\
+        4 & 5 & 6 \\
+        7 & 8 & 9
+        \end{bmatrix}
+        \cdot
+        \begin{bmatrix}
+        x \\
+        y \\
+        z
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        14 \\
+        32 \\
+        50
+        \end{bmatrix}
+        $$
 
         ## Mermaid diagram
 
@@ -824,6 +883,7 @@ public partial class MainWindow : Window
         | :-------------- | :----: | ----: |
         | Preview surface | Ready  | Rich blocks stay constrained to the available width. |
         | Table layout    | Ready  | Alignment follows markdown while cell content wraps cleanly. |
+        | Advanced nodes  | Ready  | Alerts, containers, definitions, abbreviations, math, superscript, and subscript now render natively. |
         | Mermaid plugin  | Ready  | Flowchart, sequence, state, class, ER, pie, journey, timeline, quadrant, and mind map diagrams render natively. |
         | Code fences     | Ready  | TextMate grammars are used before the built-in highlighter fallback. |
         """;

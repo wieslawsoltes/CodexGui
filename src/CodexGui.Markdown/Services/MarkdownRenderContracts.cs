@@ -369,6 +369,7 @@ public enum MarkdownEditorFeature
     List,
     Table,
     Code,
+    Math,
     Mermaid
 }
 

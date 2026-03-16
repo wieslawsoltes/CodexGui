@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CodexGui.Markdown\CodexGui.Markdown.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.Math\CodexGui.Markdown.Plugin.Math.csproj" />
     <ProjectReference Include="..\CodexGui.Markdown.Plugin.Mermaid\CodexGui.Markdown.Plugin.Mermaid.csproj" />
     <ProjectReference Include="..\CodexGui.Markdown.Plugin.TextMate\CodexGui.Markdown.Plugin.TextMate.csproj" />
   </ItemGroup>

@@ -3,6 +3,7 @@
     <Project Path="src/CodexGui.App/CodexGui.App.csproj" />
     <Project Path="src/CodexGui.AppServer/CodexGui.AppServer.csproj" />
     <Project Path="src/CodexGui.Markdown/CodexGui.Markdown.csproj" />
+    <Project Path="src/CodexGui.Markdown.Plugin.Math/CodexGui.Markdown.Plugin.Math.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.Mermaid/CodexGui.Markdown.Plugin.Mermaid.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.TextMate/CodexGui.Markdown.Plugin.TextMate.csproj" />
     <Project Path="src/CodexGui.Markdown.Sample/CodexGui.Markdown.Sample.csproj" />
