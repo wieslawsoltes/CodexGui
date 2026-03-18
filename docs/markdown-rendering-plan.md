@@ -22,6 +22,8 @@ This architecture is solid. The remaining work is mostly about filling in native
 - links, autolinks, images, and footnote links
 - footnote groups
 - HTML blocks and inlines rendered safely as literal text
+- Collapsible/details sections via plugin
+- Safe embed/media cards via plugin
 - Mermaid via plugin
 - TextMate code highlighting via plugin
 
@@ -77,3 +79,33 @@ This change will:
 - do not render raw HTML as executable or interactive web content
 - stay within the existing `MarkdownTextBlock` and rich-block-host model
 - keep visuals Fluent-aligned, restrained, and consistent with the current markdown surfaces
+
+## WYSIWYG engine integration notes
+
+`CodexGui.Markdown` now uses the rendered preview as an editing surface instead of treating preview rendering as a one-way display step. The source markdown still remains authoritative, but preview edits flow back through source-span-aware services so inline editing, hover highlighting, and source reveal stay coordinated.
+
+Recommended integration pattern:
+
+1. create the optional plugin set you want to enable
+2. build one shared `MarkdownPluginRegistry` with `MarkdownRenderingServices.CreateRegistry(...)`
+3. reuse that registry for both `CreateController(registry)` and `CreateEditingService(registry)`
+4. assign the resulting services to `MarkdownTextBlock`
+5. keep the source editor or document model authoritative and apply `MarkdownEdited` results back into it
+
+In the sample app this shared-registry pattern keeps preview rendering, preview editing, hit testing, and template selection aligned to the same plugin surface.
+
+## Validation guidance
+
+Use the existing repository commands:
+
+- `dotnet build CodexGui.slnx --nologo`
+- `dotnet test CodexGui.slnx --nologo`
+- `dotnet tool restore && bash ./check-docs.sh`
+
+The markdown sample should also be checked manually for:
+
+- hover-to-source highlighting
+- click-to-reveal source behavior
+- inline preview editing
+- plugin-backed block rendering, including collapsible and embed cards
+- file open/save flows that depend on `BaseUri`

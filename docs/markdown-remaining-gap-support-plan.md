@@ -49,3 +49,47 @@ The markdown engine is now plugin-first for many rich block features, but a smal
 - Validation succeeded with:
   - `dotnet build CodexGui.slnx --nologo --verbosity minimal`
   - `dotnet test CodexGui.slnx --nologo --verbosity minimal`
+
+## Plugin registration notes
+
+The current sample plugin set is:
+
+- `AlertsMarkdownPlugin`
+- `CustomContainersMarkdownPlugin`
+- `DefinitionListMarkdownPlugin`
+- `FiguresMarkdownPlugin`
+- `FootersMarkdownPlugin`
+- `MathMarkdownPlugin`
+- `MermaidMarkdownPlugin`
+- `SyntaxHighlightingMarkdownPlugin`
+- `TextMateMarkdownPlugin`
+
+Integration guidance:
+
+- create one shared `MarkdownPluginRegistry` for a markdown surface and reuse it for both `CreateControllerFromRegistry(...)` and `CreateEditingServiceFromRegistry(...)`
+- keep plugin references additive so the core markdown package still behaves sensibly without them
+- rely on each plugin component's `Order` value for precedence, which is what keeps `TextMateMarkdownPlugin` ahead of the built-in syntax-highlighting fallback when a grammar exists
+
+## Sample coverage scaffolding
+
+The default markdown sample now carries generated sections for:
+
+1. plugin registration and integration notes
+2. validation scaffolding
+3. future plugin directions
+
+This keeps the showcase aligned with the actual sample wiring instead of maintaining a second hand-written checklist.
+
+## Future plugin directions
+
+The current sample and solution now register dedicated plugins for:
+
+- collapsible/details blocks
+- embeds/media cards
+
+Keep these next candidates documented-only until their projects exist and compile cleanly:
+
+- comments/annotations
+- citations/bibliography
+
+If a planned plugin project is not present in the current worktree, document the intended registration and sample coverage instead of forcing a broken project reference.
