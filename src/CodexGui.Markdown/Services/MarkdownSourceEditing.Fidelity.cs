@@ -6,9 +6,10 @@ internal static partial class MarkdownSourceEditing
 {
     internal static string DetectLineEnding(string? text, string fallback = "\n")
     {
+        var normalizedFallback = string.IsNullOrWhiteSpace(fallback) ? "\n" : fallback;
         if (string.IsNullOrEmpty(text))
         {
-            return fallback;
+            return normalizedFallback;
         }
 
         return text.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
@@ -16,7 +17,11 @@ internal static partial class MarkdownSourceEditing
 
     internal static string NormalizeLineEndings(string? text, string lineEnding)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(lineEnding);
+        if (string.IsNullOrWhiteSpace(lineEnding))
+        {
+            lineEnding = "\n";
+        }
+
         return NormalizeLineEndings(text).Replace("\n", lineEnding, StringComparison.Ordinal);
     }
 
