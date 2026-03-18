@@ -177,7 +177,7 @@ internal sealed class MarkdownStructuralEditingService
             return false;
         }
 
-        const string separator = "\n\n";
+        var separator = ResolveBlockSeparator(blockMarkdown, markdown);
         var replacement = string.Concat(blockMarkdown, separator, blockMarkdown);
         var revealStart = context.SourceSpan.Start + blockMarkdown.Length + separator.Length;
         result = new MarkdownStructuralEditResult(
@@ -343,7 +343,7 @@ internal sealed class MarkdownStructuralEditingService
                     return false;
                 }
 
-                const string separator = "\n\n";
+                var separator = ResolveBlockSeparator(context.SourceSpan.Slice(markdown), markdown);
                 var replacement = string.Concat(left, separator, right);
                 var revealStart = context.SourceSpan.Start + left.Length + separator.Length;
                 result = new MarkdownStructuralEditResult(
@@ -366,7 +366,7 @@ internal sealed class MarkdownStructuralEditingService
                     return false;
                 }
 
-                const string separator = "\n\n";
+                var separator = ResolveBlockSeparator(context.SourceSpan.Slice(markdown), markdown);
                 var leftMarkdown = MarkdownSourceEditing.BuildHeadingMarkdown(heading.Level, left);
                 var rightMarkdown = MarkdownSourceEditing.BuildParagraphMarkdown(right);
                 var replacement = string.Concat(leftMarkdown, separator, rightMarkdown);
@@ -391,9 +391,9 @@ internal sealed class MarkdownStructuralEditingService
                     return false;
                 }
 
-                var languageHint = ExtractCodeLanguageHint(context.SourceSpan.Slice(markdown));
-                const string separator = "\n\n";
                 var existingSourceText = context.SourceSpan.Slice(markdown);
+                var languageHint = ExtractCodeLanguageHint(existingSourceText);
+                var separator = ResolveBlockSeparator(existingSourceText, markdown);
                 var leftMarkdown = MarkdownSourceEditing.BuildCodeFence(languageHint, left, existingSourceText);
                 var rightMarkdown = MarkdownSourceEditing.BuildCodeFence(languageHint, right, existingSourceText);
                 var replacement = string.Concat(leftMarkdown, separator, rightMarkdown);
@@ -603,6 +603,14 @@ internal sealed class MarkdownStructuralEditingService
         }
 
         return string.Empty;
+    }
+
+    private static string ResolveBlockSeparator(string? preferredSourceText, string? fallbackSourceText)
+    {
+        var lineEnding = MarkdownSourceEditing.DetectLineEnding(
+            preferredSourceText,
+            MarkdownSourceEditing.DetectLineEnding(fallbackSourceText));
+        return string.Concat(lineEnding, lineEnding);
     }
 
     private static string AdjustListIndentation(string sourceText, int offset)
