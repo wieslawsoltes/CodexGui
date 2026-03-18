@@ -121,18 +121,25 @@ internal static partial class MarkdownSourceEditing
 
     public static string ResolveCodeFenceDelimiter(string code)
     {
-        var normalized = NormalizeLineEndings(code);
-        return normalized.Contains("```", StringComparison.Ordinal) ? "~~~~" : "```";
+        return ResolveCodeFenceDelimiter(code, existingSourceText: null);
     }
 
-    public static string BuildCodeFence(string languageHint, string code)
+    public static string ResolveCodeFenceDelimiter(string code, string? existingSourceText)
+    {
+        ArgumentNullException.ThrowIfNull(code);
+        return DetermineCodeFenceDelimiter(code, existingSourceText);
+    }
+
+    public static string BuildCodeFence(string languageHint, string code, string? existingSourceText = null)
     {
         var normalizedCode = NormalizeBlockText(code);
         var normalizedLanguage = NormalizeLanguageHint(languageHint);
-        var fence = ResolveCodeFenceDelimiter(normalizedCode);
+        var fence = ResolveCodeFenceDelimiter(normalizedCode, existingSourceText);
+        var lineEnding = DetectLineEnding(existingSourceText);
+        normalizedCode = NormalizeLineEndings(normalizedCode, lineEnding);
         return string.IsNullOrWhiteSpace(normalizedLanguage)
-            ? $"{fence}\n{normalizedCode}\n{fence}"
-            : $"{fence}{normalizedLanguage}\n{normalizedCode}\n{fence}";
+            ? string.Concat(fence, lineEnding, normalizedCode, lineEnding, fence)
+            : string.Concat(fence, normalizedLanguage, lineEnding, normalizedCode, lineEnding, fence);
     }
 
     public static string BuildBlockInsertionReplacement(
@@ -142,8 +149,9 @@ internal static partial class MarkdownSourceEditing
         out int revealStart,
         out int revealLength)
     {
-        var normalizedCurrentBlock = NormalizeBlockText(currentBlockMarkdown);
-        var normalizedInsertedBlock = NormalizeBlockText(insertedBlockMarkdown);
+        var lineEnding = DetectLineEnding(currentBlockMarkdown, DetectLineEnding(insertedBlockMarkdown));
+        var normalizedCurrentBlock = NormalizeLineEndings(TrimTrailingLineBreaks(currentBlockMarkdown), lineEnding);
+        var normalizedInsertedBlock = NormalizeLineEndings(TrimTrailingLineBreaks(insertedBlockMarkdown), lineEnding);
 
         if (normalizedInsertedBlock.Length == 0)
         {
@@ -159,7 +167,7 @@ internal static partial class MarkdownSourceEditing
             return normalizedInsertedBlock;
         }
 
-        const string separator = "\n\n";
+        var separator = string.Concat(lineEnding, lineEnding);
         if (insertBefore)
         {
             revealStart = 0;

@@ -589,7 +589,7 @@ internal sealed class TextMateCodeBlockEditorPlugin : IMarkdownEditorPlugin
             body.Children.Add(MarkdownEditorUiFactory.CreateInfoText("Edit the code fence with AvaloniaEdit + TextMate highlighting and apply the generated fenced block back into the markdown source."));
         }
 
-        string BuildCurrentMarkdown() => BuildCodeFence(languageTextBox.Text ?? string.Empty, editor.Text ?? string.Empty);
+        string BuildCurrentMarkdown() => BuildCodeFence(languageTextBox.Text ?? string.Empty, editor.Text ?? string.Empty, context.SourceText);
 
         body.Children.Add(settingsRow);
         body.Children.Add(new Border
@@ -612,14 +612,104 @@ internal sealed class TextMateCodeBlockEditorPlugin : IMarkdownEditorPlugin
             buildBlockMarkdownForActions: BuildCurrentMarkdown);
     }
 
-    private static string BuildCodeFence(string languageHint, string code)
+    private static string BuildCodeFence(string languageHint, string code, string? existingSourceText)
     {
         var normalizedCode = TextMateCodeBlockRenderingPlugin.NormalizeCode(code);
         var normalizedLanguage = TextMateCodeBlockRenderingPlugin.NormalizeLanguageHint(languageHint);
-        var fence = normalizedCode.Contains("```", StringComparison.Ordinal) ? "~~~~" : "```";
+        var fence = DetermineCodeFenceDelimiter(normalizedCode, existingSourceText);
+        var lineEnding = DetectLineEnding(existingSourceText);
+        normalizedCode = normalizedCode.Replace("\n", lineEnding, StringComparison.Ordinal);
+
         return string.IsNullOrWhiteSpace(normalizedLanguage)
-            ? $"{fence}\n{normalizedCode}\n{fence}"
-            : $"{fence}{normalizedLanguage}\n{normalizedCode}\n{fence}";
+            ? string.Concat(fence, lineEnding, normalizedCode, lineEnding, fence)
+            : string.Concat(fence, normalizedLanguage, lineEnding, normalizedCode, lineEnding, fence);
+    }
+
+    private static string DetermineCodeFenceDelimiter(string code, string? existingSourceText)
+    {
+        if (TryParseExistingFence(existingSourceText, out var fence))
+        {
+            var requiredLength = Math.Max(fence.Length, FindMaxFenceRun(code, fence[0]) + 1);
+            return new string(fence[0], Math.Max(requiredLength, 3));
+        }
+
+        var backtickLength = Math.Max(3, FindMaxFenceRun(code, '`') + 1);
+        var tildeLength = Math.Max(3, FindMaxFenceRun(code, '~') + 1);
+        return backtickLength <= tildeLength
+            ? new string('`', backtickLength)
+            : new string('~', tildeLength);
+    }
+
+    private static bool TryParseExistingFence(string? existingSourceText, out string fence)
+    {
+        fence = string.Empty;
+        if (string.IsNullOrWhiteSpace(existingSourceText))
+        {
+            return false;
+        }
+
+        var normalized = existingSourceText
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
+        var firstNewline = normalized.IndexOf('\n');
+        if (firstNewline <= 0)
+        {
+            return false;
+        }
+
+        var openingLine = normalized[..firstNewline].Trim();
+        if (openingLine.Length < 3)
+        {
+            return false;
+        }
+
+        var fenceChar = openingLine[0];
+        if (fenceChar is not '`' and not '~')
+        {
+            return false;
+        }
+
+        var length = 0;
+        while (length < openingLine.Length && openingLine[length] == fenceChar)
+        {
+            length++;
+        }
+
+        if (length < 3)
+        {
+            return false;
+        }
+
+        fence = new string(fenceChar, length);
+        return true;
+    }
+
+    private static int FindMaxFenceRun(string code, char fenceChar)
+    {
+        var maxRunLength = 0;
+        var currentRunLength = 0;
+
+        foreach (var character in code)
+        {
+            if (character == fenceChar)
+            {
+                currentRunLength++;
+                maxRunLength = Math.Max(maxRunLength, currentRunLength);
+            }
+            else
+            {
+                currentRunLength = 0;
+            }
+        }
+
+        return maxRunLength;
+    }
+
+    private static string DetectLineEnding(string? existingSourceText)
+    {
+        return string.IsNullOrEmpty(existingSourceText) || !existingSourceText.Contains("\r\n", StringComparison.Ordinal)
+            ? "\n"
+            : "\r\n";
     }
 
     private sealed class DelegateDisposable(Action dispose) : IDisposable

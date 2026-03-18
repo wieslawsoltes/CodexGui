@@ -10,6 +10,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Markdig.Extensions.Tables;
 using Markdig.Extensions.TaskLists;
 using Markdig.Syntax;
@@ -928,7 +929,7 @@ internal sealed class PlainCodeMarkdownEditorPlugin : MarkdownEditorPluginBase<C
             body.Children.Add(MarkdownEditorUiFactory.CreateInfoText("Edit the code block content and language hint. The built-in editor emits fenced code blocks when you apply changes."));
         }
 
-        string BuildCurrentMarkdown() => MarkdownSourceEditing.BuildCodeFence(languageTextBox.Text ?? string.Empty, codeTextBox.Text ?? string.Empty);
+        string BuildCurrentMarkdown() => MarkdownSourceEditing.BuildCodeFence(languageTextBox.Text ?? string.Empty, codeTextBox.Text ?? string.Empty, context.SourceText);
 
         body.Children.Add(settingsRow);
         body.Children.Add(codeTextBox);
@@ -1522,6 +1523,32 @@ public static class MarkdownEditorUiFactory
             InputElement.KeyDownEvent,
             (_, eventArgs) =>
             {
+                var textBox = ResolveFocusedTextBox(root);
+                var isCommand = eventArgs.KeyModifiers.HasFlag(KeyModifiers.Control) || eventArgs.KeyModifiers.HasFlag(KeyModifiers.Meta);
+
+                if (isCommand && textBox is not null)
+                {
+                    switch (eventArgs.Key)
+                    {
+                        case Key.B:
+                            ApplyWrapper(textBox, "**", "**");
+                            eventArgs.Handled = true;
+                            return;
+                        case Key.I:
+                            ApplyWrapper(textBox, "_", "_");
+                            eventArgs.Handled = true;
+                            return;
+                        case Key.K:
+                            ApplyLink(textBox);
+                            eventArgs.Handled = true;
+                            return;
+                        case Key.X when eventArgs.KeyModifiers.HasFlag(KeyModifiers.Shift):
+                            ApplyWrapper(textBox, "~~", "~~");
+                            eventArgs.Handled = true;
+                            return;
+                    }
+                }
+
                 if (eventArgs.Key == Key.Escape)
                 {
                     cancel();
@@ -1538,6 +1565,14 @@ public static class MarkdownEditorUiFactory
             },
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
+    }
+
+    private static TextBox? ResolveFocusedTextBox(Control root)
+    {
+        return root
+            .GetVisualDescendants()
+            .OfType<TextBox>()
+            .FirstOrDefault(static textBox => textBox.IsKeyboardFocusWithin);
     }
 
     private static void ApplyInlineTextBoxChrome(

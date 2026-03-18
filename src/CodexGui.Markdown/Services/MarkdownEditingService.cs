@@ -86,11 +86,6 @@ public sealed class MarkdownEditingService : IMarkdownEditingService
 
     private IReadOnlyList<MarkdownBlockTemplate> GetBlockTemplates(MarkdownEditorRenderRequest request)
     {
-        if (_blockTemplateProviders.Count == 0)
-        {
-            return [];
-        }
-
         var context = new MarkdownBlockTemplateContext
         {
             Node = request.Node,
@@ -99,6 +94,18 @@ public sealed class MarkdownEditingService : IMarkdownEditingService
             Session = request.Session,
             Preferences = request.Preferences
         };
+
+        return GetBlockTemplates(context);
+    }
+
+    internal IReadOnlyList<MarkdownBlockTemplate> GetBlockTemplates(MarkdownBlockTemplateContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (_blockTemplateProviders.Count == 0)
+        {
+            return [];
+        }
 
         List<MarkdownBlockTemplate> templates = [];
         foreach (var provider in _blockTemplateProviders)

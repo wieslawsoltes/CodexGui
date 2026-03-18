@@ -4,12 +4,14 @@ namespace CodexGui.Markdown.Services;
 
 internal static partial class MarkdownSourceEditing
 {
-    public static string BuildYamlFrontMatter(string? text)
+    public static string BuildYamlFrontMatter(string? text, string? existingSourceText = null)
     {
+        var style = ParseYamlFrontMatterStyle(existingSourceText);
         var normalized = NormalizeBlockText(text);
+        normalized = NormalizeLineEndings(normalized, style.LineEnding);
         return normalized.Length == 0
-            ? "---\n---"
-            : $"---\n{normalized}\n---";
+            ? string.Concat(style.OpeningFence, style.LineEnding, style.ClosingFence)
+            : string.Concat(style.OpeningFence, style.LineEnding, normalized, style.LineEnding, style.ClosingFence);
     }
 
     public static string ExtractYamlFrontMatterBody(string sourceText)
@@ -38,7 +40,7 @@ internal static partial class MarkdownSourceEditing
         return $"*[{normalizedLabel}]: {normalizedText}";
     }
 
-    public static string BuildLinkReferenceDefinition(string? label, string? url, string? title)
+    public static string BuildLinkReferenceDefinition(string? label, string? url, string? title, string? existingSourceText = null)
     {
         var normalizedLabel = SanitizeReferenceLabel(label, fallback: "reference");
         var normalizedUrl = NormalizeInlineText(url);
@@ -48,13 +50,15 @@ internal static partial class MarkdownSourceEditing
         }
 
         var normalizedTitle = NormalizeInlineText(title);
+        var titleStyle = ParseReferenceTitleStyle(existingSourceText);
         return normalizedTitle.Length == 0
             ? $"[{normalizedLabel}]: {normalizedUrl}"
-            : $"[{normalizedLabel}]: {normalizedUrl} \"{EscapeQuotedText(normalizedTitle)}\"";
+            : $"[{normalizedLabel}]: {normalizedUrl} {FormatReferenceTitle(titleStyle, normalizedTitle)}";
     }
 
-    public static string BuildFootnoteMarkdown(string? label, string? text)
+    public static string BuildFootnoteMarkdown(string? label, string? text, string? existingSourceText = null)
     {
+        var style = ParseFootnoteStyle(existingSourceText);
         var normalizedLabel = SanitizeReferenceLabel(label, fallback: "note");
         var normalizedText = NormalizeBlockText(text);
         var lines = normalizedText.Split('\n', StringSplitOptions.None);
@@ -74,10 +78,10 @@ internal static partial class MarkdownSourceEditing
 
         for (var index = 1; index < lines.Length; index++)
         {
-            builder.Append('\n');
+            builder.Append(style.LineEnding);
             if (lines[index].Length > 0)
             {
-                builder.Append("    ").Append(lines[index]);
+                builder.Append(style.ContinuationIndent).Append(lines[index]);
             }
         }
 
@@ -156,5 +160,20 @@ internal static partial class MarkdownSourceEditing
     private static string EscapeQuotedText(string text)
     {
         return text.Replace("\"", "\\\"", StringComparison.Ordinal);
+    }
+
+    private static string EscapeSingleQuotedText(string text)
+    {
+        return text.Replace("'", "\\'", StringComparison.Ordinal);
+    }
+
+    private static string FormatReferenceTitle(MarkdownReferenceTitleStyle style, string title)
+    {
+        return style.Delimiter switch
+        {
+            MarkdownReferenceTitleDelimiter.SingleQuote => $"'{EscapeSingleQuotedText(title)}'",
+            MarkdownReferenceTitleDelimiter.Parentheses => $"({title})",
+            _ => $"\"{EscapeQuotedText(title)}\""
+        };
     }
 }

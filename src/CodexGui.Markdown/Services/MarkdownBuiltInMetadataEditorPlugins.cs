@@ -69,7 +69,7 @@ internal sealed class YamlFrontMatterMarkdownEditorPlugin : MarkdownEditorPlugin
             body.Children.Add(MarkdownEditorUiFactory.CreateInfoText("Edit YAML metadata directly. The editor writes the surrounding `---` fences for you when you apply changes."));
         }
 
-        string BuildCurrentMarkdown() => MarkdownSourceEditing.BuildYamlFrontMatter(yamlTextBox.Text);
+        string BuildCurrentMarkdown() => MarkdownSourceEditing.BuildYamlFrontMatter(yamlTextBox.Text, context.SourceText);
 
         body.Children.Add(yamlTextBox);
 
@@ -173,7 +173,7 @@ internal sealed class LinkReferenceMarkdownEditorPlugin : MarkdownEditorPluginBa
             body.Children.Insert(0, MarkdownEditorUiFactory.CreateInfoText("Edit the label, destination URL, and optional title for this reference-style link definition."));
         }
 
-        string BuildCurrentMarkdown() => MarkdownSourceEditing.BuildLinkReferenceDefinition(labelTextBox.Text, urlTextBox.Text, titleTextBox.Text);
+        string BuildCurrentMarkdown() => MarkdownSourceEditing.BuildLinkReferenceDefinition(labelTextBox.Text, urlTextBox.Text, titleTextBox.Text, context.SourceText);
 
         return MarkdownEditorUiFactory.CreateEditorSurface(
             context,
@@ -214,7 +214,7 @@ internal sealed class FootnoteMarkdownEditorPlugin : MarkdownEditorPluginBase<Fo
             body.Children.Add(MarkdownEditorUiFactory.CreateInfoText("Edit the footnote label and body. Extra body lines are emitted with the indentation required by markdown footnote syntax."));
         }
 
-        string BuildCurrentMarkdown() => MarkdownSourceEditing.BuildFootnoteMarkdown(labelTextBox.Text, bodyTextBox.Text);
+        string BuildCurrentMarkdown() => MarkdownSourceEditing.BuildFootnoteMarkdown(labelTextBox.Text, bodyTextBox.Text, context.SourceText);
 
         body.Children.Add(MarkdownMetadataEditorLayout.CreateLabeledField("Label", labelTextBox));
         body.Children.Add(MarkdownEditorUiFactory.CreateTextStyleToolbar(() => bodyTextBox));

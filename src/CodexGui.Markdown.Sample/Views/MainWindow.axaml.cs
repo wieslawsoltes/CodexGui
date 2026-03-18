@@ -12,15 +12,8 @@ using Avalonia.Threading;
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.TextMate;
 using CodexGui.Markdown.Controls;
-using CodexGui.Markdown.Plugin.Alerts;
-using CodexGui.Markdown.Plugin.CustomContainers;
-using CodexGui.Markdown.Plugin.DefinitionLists;
-using CodexGui.Markdown.Plugin.Figures;
-using CodexGui.Markdown.Plugin.Footers;
-using CodexGui.Markdown.Plugin.Math;
-using CodexGui.Markdown.Plugin.Mermaid;
-using CodexGui.Markdown.Plugin.SyntaxHighlighting;
 using CodexGui.Markdown.Plugin.TextMate;
+using CodexGui.Markdown.Sample;
 using CodexGui.Markdown.Sample.Controls;
 using CodexGui.Markdown.Services;
 using TextMateSharp.Grammars;
@@ -29,21 +22,10 @@ namespace CodexGui.Markdown.Sample.Views;
 
 public partial class MainWindow : Window
 {
-    private static readonly IMarkdownPlugin[] PreviewPlugins =
-    [
-        new AlertsMarkdownPlugin(),
-        new CustomContainersMarkdownPlugin(),
-        new DefinitionListMarkdownPlugin(),
-        new FiguresMarkdownPlugin(),
-        new FootersMarkdownPlugin(),
-        new MathMarkdownPlugin(),
-        new MermaidMarkdownPlugin(),
-        new SyntaxHighlightingMarkdownPlugin(),
-        new TextMateMarkdownPlugin()
-    ];
-
-    private static readonly IMarkdownRenderController PreviewRenderController = MarkdownRenderingServices.CreateController(PreviewPlugins);
-    private static readonly IMarkdownEditingService PreviewEditingService = MarkdownRenderingServices.CreateEditingService(PreviewPlugins);
+    private static readonly IMarkdownPlugin[] PreviewPlugins = MarkdownSampleCatalog.CreatePreviewPlugins();
+    private static readonly MarkdownPluginRegistry PreviewRegistry = MarkdownRenderingServices.CreateRegistry(PreviewPlugins);
+    private static readonly IMarkdownRenderController PreviewRenderController = MarkdownRenderingServices.CreateControllerFromRegistry(PreviewRegistry);
+    private static readonly IMarkdownEditingService PreviewEditingService = MarkdownRenderingServices.CreateEditingServiceFromRegistry(PreviewRegistry);
     private static readonly IReadOnlyList<CodeEditorOption> CodeEditorOptions =
     [
         new("Built-in markdown code editor", MarkdownBuiltInEditorIds.Code),
@@ -84,6 +66,7 @@ public partial class MainWindow : Window
         Preview.EditorPreferences = new MarkdownEditorPreferences()
             .PreferEditor(MarkdownEditorFeature.Code, TextMateMarkdownPlugin.TextMateCodeEditorId);
         Preview.MarkdownEdited += OnPreviewMarkdownEdited;
+        Preview.MarkdownSelectionChanged += OnPreviewMarkdownSelectionChanged;
 
         CodeEditorSelector.ItemsSource = CodeEditorOptions;
         CodeEditorSelector.SelectedItem = CodeEditorOptions[1];
@@ -181,6 +164,11 @@ public partial class MainWindow : Window
 
     private void OnPreviewHostPointerPressed(object? sender, PointerPressedEventArgs eventArgs)
     {
+        if (eventArgs.Handled)
+        {
+            return;
+        }
+
         if (!eventArgs.GetCurrentPoint(PreviewHost).Properties.IsLeftButtonPressed)
         {
             return;
@@ -191,17 +179,16 @@ public partial class MainWindow : Window
             return;
         }
 
-        var point = eventArgs.GetPosition(Preview);
-        if (Preview.IsEditingEnabled && Preview.TryBeginEdit(point))
+        if (!Preview.IsEditingEnabled || eventArgs.ClickCount < 2)
         {
-            ClearPreviewHover();
-            eventArgs.Handled = true;
             return;
         }
 
-        if (Preview.HitTestMarkdown(point) is { } hit)
+        var point = eventArgs.GetPosition(Preview);
+        if (Preview.TryBeginEdit(point))
         {
-            RevealEditorSourceSpan(hit.SourceSpan);
+            ClearPreviewHover();
+            eventArgs.Handled = true;
         }
     }
 
@@ -477,6 +464,7 @@ public partial class MainWindow : Window
         Editor.TextArea.TextView.BackgroundRenderers.Remove(_editorHoverHighlightRenderer);
         _textMateInstallation.Dispose();
         FoldingManager.Uninstall(_foldingManager);
+        Preview.MarkdownSelectionChanged -= OnPreviewMarkdownSelectionChanged;
         Closed -= OnWindowClosed;
     }
 
@@ -569,6 +557,21 @@ public partial class MainWindow : Window
         RevealEditorRange(eventArgs.RevealStart, eventArgs.RevealLength);
     }
 
+    private void OnPreviewMarkdownSelectionChanged(object? sender, MarkdownSelectionChangedEventArgs eventArgs)
+    {
+        if (Preview.ActiveEditorSession is not null)
+        {
+            return;
+        }
+
+        if (eventArgs.CurrentSelection is not { SourceSpan: var sourceSpan } || sourceSpan.IsEmpty)
+        {
+            return;
+        }
+
+        RevealEditorSourceSpan(sourceSpan);
+    }
+
     private void RevealEditorSourceSpan(MarkdownSourceSpan sourceSpan)
     {
         if (!TryResolveEditorRange(sourceSpan, out var start, out var length))
@@ -631,7 +634,13 @@ public partial class MainWindow : Window
         public override string ToString() => Label;
     }
 
-    private const string DefaultMarkdownDocument =
+    private static readonly string DefaultMarkdownDocument = string.Concat(
+        DefaultMarkdownDocumentBody,
+        Environment.NewLine,
+        Environment.NewLine,
+        MarkdownSampleCatalog.BuildSupplementalMarkdown());
+
+    private const string DefaultMarkdownDocumentBody =
         """
         ---
         title: CodexGui Markdown Control Showcase
@@ -648,13 +657,16 @@ public partial class MainWindow : Window
         - Live markdown preview updates as you type.
         - TextMate-based syntax highlighting in AvaloniaEdit.
         - Markdown foldings for headings and fenced code blocks.
-        - Plugin-based preview rendering for Mermaid diagrams, alert callouts, built-in syntax highlighting, and code fences.
-        - AST-backed rendering for alerts, figures, custom containers, definition lists, footers, and math plus native abbreviations.
-        - Optional in-place preview editing for alerts, figures, custom containers, footers, paragraphs, headings, lists, tables, code blocks, Mermaid diagrams, math nodes, footnotes, abbreviations, link references, and YAML front matter.
+        - Plugin-based preview rendering for Mermaid diagrams, collapsible sections, safe embed cards, alert callouts, built-in syntax highlighting, and code fences.
+        - AST-backed rendering for alerts, collapsible sections, embeds, figures, custom containers, definition lists, footers, and math plus native abbreviations.
+        - Optional in-place preview editing for alerts, collapsible sections, embed cards, figures, custom containers, footers, paragraphs, headings, lists, tables, code blocks, Mermaid diagrams, math nodes, footnotes, abbreviations, link references, and YAML front matter.
         - In-place text editing for paragraphs, headings, and list items with one editor surface per block plus formatting actions.
+        - Preview block selection keeps the source editor in sync, while double-click opens in-place editing without sacrificing keyboard navigation.
+        - Keyboard-first block navigation, structural edits, slash-command insertion, and heading breadcrumbs are available directly from the preview surface.
         - Emoji shortcodes, smart punctuation, marked text, and inserted text now render with dedicated inline styling.
         - Insert new markdown blocks before or after the active block while editing in the preview.
         - Native `File` menu with New/Open/Save/Save As.
+        - Generated plugin registration, validation scaffolding, and future-plugin notes stay aligned with the sample wiring.
 
         ## Links and footnotes
 
@@ -701,6 +713,39 @@ public partial class MainWindow : Window
 
         :::warning Migration note
         Mermaid-specific custom containers still belong to the Mermaid plugin, while generic documentation callouts can stay here.
+        :::
+
+        ## Collapsible sections
+
+        :::details [open] Preview editing shortcuts
+        Use collapsible sections for release notes, FAQs, or optional implementation notes.
+
+        - dedicated plugin keeps the `:::details` fence semantic
+        - preview editing can change the summary text and initial expansion state
+        - nested markdown content stays inside the disclosure body
+        :::
+
+        :::collapsible Troubleshooting notes
+        Collapse implementation detail until the reader needs it, while keeping the source markdown round-trippable.
+        :::
+
+        ## Safe embeds
+
+        :::embed video
+        url: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+        title: Release walkthrough
+        provider: YouTube
+        poster: https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg
+
+        Use supporting markdown to summarize the media, call out timestamps, or capture the takeaways readers should notice.
+        :::
+
+        :::embed document
+        url: https://example.com/design-review.pdf
+        title: Design review packet
+        provider: Example Docs
+
+        Safe embed cards link out instead of hosting raw remote iframes, which keeps the preview deterministic and secure.
         :::
 
         ## Footer
