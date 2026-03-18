@@ -353,7 +353,8 @@ internal static class MarkdownEmbedSyntax
         string? provider,
         string? posterUrl,
         string? bodyMarkdown,
-        int preferredFenceLength = 3)
+        int preferredFenceLength = 3,
+        string? existingSourceText = null)
     {
         var normalizedKind = NormalizeKind(kind);
         var normalizedUrl = NormalizeInlineText(url);
@@ -361,27 +362,31 @@ internal static class MarkdownEmbedSyntax
         var normalizedProvider = NormalizeInlineText(provider);
         var normalizedPoster = NormalizeInlineText(posterUrl);
         var normalizedBody = NormalizeBlockText(bodyMarkdown);
+        var lineEnding = DetectLineEnding(existingSourceText);
 
         var contentBuilder = new StringBuilder();
         contentBuilder.Append("url: ").Append(normalizedUrl);
         if (normalizedTitle.Length > 0)
         {
-            contentBuilder.Append('\n').Append("title: ").Append(normalizedTitle);
+            contentBuilder.Append(lineEnding).Append("title: ").Append(normalizedTitle);
         }
 
         if (normalizedProvider.Length > 0)
         {
-            contentBuilder.Append('\n').Append("provider: ").Append(normalizedProvider);
+            contentBuilder.Append(lineEnding).Append("provider: ").Append(normalizedProvider);
         }
 
         if (normalizedPoster.Length > 0)
         {
-            contentBuilder.Append('\n').Append("poster: ").Append(normalizedPoster);
+            contentBuilder.Append(lineEnding).Append("poster: ").Append(normalizedPoster);
         }
 
         if (normalizedBody.Length > 0)
         {
-            contentBuilder.Append('\n').Append('\n').Append(normalizedBody);
+            contentBuilder
+                .Append(lineEnding)
+                .Append(lineEnding)
+                .Append(NormalizeLineEndings(normalizedBody, lineEnding));
         }
 
         var content = contentBuilder.ToString();
@@ -395,8 +400,20 @@ internal static class MarkdownEmbedSyntax
             builder.Append(' ').Append(normalizedKind);
         }
 
-        builder.Append('\n').Append(content).Append('\n').Append(fence);
+        builder.Append(lineEnding).Append(content).Append(lineEnding).Append(fence);
         return builder.ToString();
+    }
+
+    private static string NormalizeLineEndings(string? source, string lineEnding)
+    {
+        return NormalizeLineEndings(source).Replace("\n", lineEnding, StringComparison.Ordinal);
+    }
+
+    private static string DetectLineEnding(string? source)
+    {
+        return string.IsNullOrEmpty(source) || !source.Contains("\r\n", StringComparison.Ordinal)
+            ? "\n"
+            : "\r\n";
     }
 
     public static bool TryCreateAbsoluteUri(string? value, out Uri? uri)

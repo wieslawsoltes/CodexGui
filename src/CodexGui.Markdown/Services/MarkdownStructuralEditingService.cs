@@ -597,12 +597,26 @@ internal sealed class MarkdownStructuralEditingService
 
         var firstLineEnd = normalized.IndexOf('\n');
         var firstLine = firstLineEnd >= 0 ? normalized[..firstLineEnd] : normalized;
-        if (firstLine.StartsWith("```", StringComparison.Ordinal) || firstLine.StartsWith("~~~~", StringComparison.Ordinal))
+        if (firstLine.Length < 3)
         {
-            return firstLine[3..].Trim();
+            return string.Empty;
         }
 
-        return string.Empty;
+        var fenceCharacter = firstLine[0];
+        if (fenceCharacter is not '`' and not '~')
+        {
+            return string.Empty;
+        }
+
+        var fenceLength = 0;
+        while (fenceLength < firstLine.Length && firstLine[fenceLength] == fenceCharacter)
+        {
+            fenceLength++;
+        }
+
+        return fenceLength < 3
+            ? string.Empty
+            : firstLine[fenceLength..].Trim();
     }
 
     private static string ResolveBlockSeparator(string? preferredSourceText, string? fallbackSourceText)

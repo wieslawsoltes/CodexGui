@@ -162,6 +162,8 @@ public sealed class MarkdownRenderContext
 {
     public required Uri? BaseUri { get; init; }
 
+    public IMarkdownRenderController? RenderController { get; init; }
+
     public required double FontSize { get; init; }
 
     public required FontFamily FontFamily { get; init; }

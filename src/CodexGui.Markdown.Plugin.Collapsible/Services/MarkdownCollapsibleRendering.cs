@@ -20,7 +20,6 @@ internal static class MarkdownCollapsibleRendering
         new CollapsibleMarkdownPlugin()
     ];
     private static readonly IMarkdownRenderController NestedRenderController = MarkdownRenderingServices.CreateController(NestedPlugins);
-    private static readonly IMarkdownEditingService NestedEditingService = MarkdownRenderingServices.CreateEditingService(NestedPlugins);
 
     public static Control CreateBlockView(MarkdownCollapsibleDocument document, MarkdownRenderContext renderContext)
     {
@@ -130,8 +129,7 @@ internal static class MarkdownCollapsibleRendering
         {
             Markdown = markdown,
             BaseUri = renderContext.BaseUri,
-            RenderController = NestedRenderController,
-            EditingService = NestedEditingService,
+            RenderController = renderContext.RenderController ?? NestedRenderController,
             IsEditingEnabled = false,
             EditorPresentationMode = MarkdownEditorPresentationMode.Inline,
             FontSize = renderContext.FontSize,

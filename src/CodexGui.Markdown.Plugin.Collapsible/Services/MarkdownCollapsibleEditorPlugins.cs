@@ -128,7 +128,8 @@ internal static class MarkdownCollapsibleEditorUiFactory
                 summaryEditor.Text,
                 bodyEditor.Text,
                 isExpandedCheckBox.IsChecked == true,
-                draft.FenceLength);
+                draft.FenceLength,
+                context.SourceText);
         }
 
         void UpdatePreview()

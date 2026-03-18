@@ -500,6 +500,7 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
             Context = new MarkdownRenderContext
             {
                 BaseUri = BaseUri,
+                RenderController = RenderController,
                 FontSize = FontSize,
                 FontFamily = FontFamily,
                 Foreground = Foreground,
@@ -876,29 +877,55 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
 
         HashSet<MarkdownSourceSpan> uniqueSpans = [];
         List<MarkdownEditorSession> sessions = [];
-        foreach (var span in _structuralEditingService.CollectBlockSpans(_lastRenderResult.ParseResult))
+        foreach (var visualEntry in _lastRenderResult.RenderMap.VisualEntries.Values)
         {
-            if (!TryCreateHitForSourceSpan(span, out var hit) || hit is null)
-            {
-                continue;
-            }
+            TryAddNavigableSession(
+                new MarkdownHitTestResult(
+                    visualEntry.AstNode,
+                    visualEntry.ElementKind,
+                    _lastRenderResult.ParseResult,
+                    visual: visualEntry.Control),
+                sessions,
+                uniqueSpans);
+        }
 
-            var session = EditingService.ResolveSession(new MarkdownEditorResolveRequest
-            {
-                HitTestResult = hit,
-                Preferences = EditorPreferences
-            });
-
-            if (session is null || !uniqueSpans.Add(session.SourceSpan))
-            {
-                continue;
-            }
-
-            sessions.Add(session);
+        foreach (var textEntry in _lastRenderResult.RenderMap.TextEntries)
+        {
+            TryAddNavigableSession(
+                new MarkdownHitTestResult(
+                    textEntry.AstNode,
+                    textEntry.ElementKind,
+                    _lastRenderResult.ParseResult,
+                    renderedTextPosition: textEntry.RenderedTextStart),
+                sessions,
+                uniqueSpans);
         }
 
         sessions.Sort(static (left, right) => left.SourceSpan.Start.CompareTo(right.SourceSpan.Start));
         return sessions;
+    }
+
+    private void TryAddNavigableSession(
+        MarkdownHitTestResult hit,
+        ICollection<MarkdownEditorSession> sessions,
+        ISet<MarkdownSourceSpan> uniqueSpans)
+    {
+        ArgumentNullException.ThrowIfNull(hit);
+        ArgumentNullException.ThrowIfNull(sessions);
+        ArgumentNullException.ThrowIfNull(uniqueSpans);
+
+        var session = EditingService.ResolveSession(new MarkdownEditorResolveRequest
+        {
+            HitTestResult = hit,
+            Preferences = EditorPreferences
+        });
+
+        if (session is null || !uniqueSpans.Add(session.SourceSpan))
+        {
+            return;
+        }
+
+        sessions.Add(session);
     }
 
     private bool TrySelectAdjacentBlock(int direction)
@@ -1059,6 +1086,7 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
             RenderContext = new MarkdownRenderContext
             {
                 BaseUri = BaseUri,
+                RenderController = RenderController,
                 FontSize = FontSize,
                 FontFamily = FontFamily,
                 Foreground = Foreground,

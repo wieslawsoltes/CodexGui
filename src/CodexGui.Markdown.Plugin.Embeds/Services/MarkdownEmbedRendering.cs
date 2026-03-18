@@ -28,7 +28,6 @@ internal static class MarkdownEmbedRendering
         new EmbedsMarkdownPlugin()
     ];
     private static readonly IMarkdownRenderController NestedRenderController = MarkdownRenderingServices.CreateController(NestedPlugins);
-    private static readonly IMarkdownEditingService NestedEditingService = MarkdownRenderingServices.CreateEditingService(NestedPlugins);
 
     public static Control CreateBlockView(MarkdownEmbedDocument document, MarkdownRenderContext renderContext)
     {
@@ -75,8 +74,7 @@ internal static class MarkdownEmbedRendering
         {
             Markdown = markdown,
             BaseUri = renderContext.BaseUri,
-            RenderController = NestedRenderController,
-            EditingService = NestedEditingService,
+            RenderController = renderContext.RenderController ?? NestedRenderController,
             IsEditingEnabled = false,
             EditorPresentationMode = MarkdownEditorPresentationMode.Inline,
             FontSize = renderContext.FontSize,

@@ -272,11 +272,13 @@ internal static partial class MarkdownCollapsibleSyntax
         string? summary,
         string? bodyMarkdown,
         bool isExpanded,
-        int preferredFenceLength = 3)
+        int preferredFenceLength = 3,
+        string? existingSourceText = null)
     {
         var normalizedKind = NormalizeInfo(kind);
         var normalizedSummary = NormalizeInlineText(summary);
         var normalizedBody = NormalizeBlockText(bodyMarkdown);
+        var lineEnding = DetectLineEnding(existingSourceText);
         var arguments = isExpanded
             ? normalizedSummary.Length > 0 ? $"[open] {normalizedSummary}" : "[open]"
             : normalizedSummary;
@@ -290,14 +292,26 @@ internal static partial class MarkdownCollapsibleSyntax
             builder.Append(' ').Append(arguments);
         }
 
-        builder.Append('\n');
+        builder.Append(lineEnding);
         if (normalizedBody.Length > 0)
         {
-            builder.Append(normalizedBody).Append('\n');
+            builder.Append(NormalizeLineEndings(normalizedBody, lineEnding)).Append(lineEnding);
         }
 
         builder.Append(fence);
         return builder.ToString();
+    }
+
+    private static string NormalizeLineEndings(string? source, string lineEnding)
+    {
+        return NormalizeLineEndings(source).Replace("\n", lineEnding, StringComparison.Ordinal);
+    }
+
+    private static string DetectLineEnding(string? source)
+    {
+        return string.IsNullOrEmpty(source) || !source.Contains("\r\n", StringComparison.Ordinal)
+            ? "\n"
+            : "\r\n";
     }
 
     private static int ResolveFenceLength(string normalizedBody, int preferredFenceLength)

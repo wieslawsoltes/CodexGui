@@ -151,7 +151,8 @@ internal static class MarkdownEmbedEditorUiFactory
                 providerEditor.Text,
                 posterEditor.Text,
                 bodyEditor.Text,
-                draft.FenceLength);
+                draft.FenceLength,
+                context.SourceText);
         }
 
         void UpdatePreview()
