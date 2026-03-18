@@ -28,7 +28,7 @@
           BeforeTargets="CoreCompile"
           Inputs="$(MSBuildProjectDirectory)/OpenApi/appserver-models.openapi.json;$(MSBuildProjectDirectory)/nswag.models.json"
           Outputs="$(MSBuildProjectDirectory)/Models/AppServerProtocolDtos.Generated.cs">
-    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="&quot;$(NSwagCli)&quot; run nswag.models.json" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="$(NSwagCli) run nswag.models.json" />
   </Target>
 
 </Project>
