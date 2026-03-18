@@ -7,6 +7,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
 using Markdig;
 using Markdig.Syntax;
+using System.Threading;
 using MarkdownInline = Markdig.Syntax.Inlines.Inline;
 
 namespace CodexGui.Markdown.Services;
@@ -177,6 +178,10 @@ public sealed class MarkdownRenderContext
 
     public required Func<int, bool> IsCurrentRender { get; init; }
 
+    public CancellationToken CancellationToken { get; init; } = CancellationToken.None;
+
+    public MarkdownRenderDiagnostics Diagnostics { get; init; } = new();
+
     public MarkdownEditorState? EditorState { get; init; }
 }
 
@@ -233,6 +238,16 @@ public sealed class MarkdownBlockRenderingPluginContext
     {
         ArgumentNullException.ThrowIfNull(resource);
         RenderContext.ResourceTracker.Track(resource);
+    }
+
+    public void ReportDiagnostic(
+        MarkdownRenderDiagnosticSeverity severity,
+        string source,
+        string message,
+        MarkdownSourceSpan? sourceSpan = null,
+        Exception? exception = null)
+    {
+        RenderContext.Diagnostics.Report(severity, source, message, sourceSpan ?? MarkdownSourceSpan.FromMarkdig(Block.Span), exception);
     }
 
     public bool IsCurrentRender() => RenderContext.IsCurrentRender(RenderContext.RenderGeneration);
@@ -296,6 +311,16 @@ public sealed class MarkdownInlineRenderingPluginContext
     {
         ArgumentNullException.ThrowIfNull(resource);
         RenderContext.ResourceTracker.Track(resource);
+    }
+
+    public void ReportDiagnostic(
+        MarkdownRenderDiagnosticSeverity severity,
+        string source,
+        string message,
+        MarkdownSourceSpan? sourceSpan = null,
+        Exception? exception = null)
+    {
+        RenderContext.Diagnostics.Report(severity, source, message, sourceSpan ?? MarkdownSourceSpan.FromMarkdig(Inline.Span), exception);
     }
 
     public bool IsCurrentRender() => RenderContext.IsCurrentRender(RenderContext.RenderGeneration);
@@ -366,6 +391,68 @@ public readonly record struct MarkdownSourceSpan(int Start, int Length)
     public static MarkdownSourceSpan FromMarkdig(SourceSpan sourceSpan)
     {
         return sourceSpan.IsEmpty ? Empty : new MarkdownSourceSpan(sourceSpan.Start, sourceSpan.Length);
+    }
+}
+
+public enum MarkdownRenderDiagnosticSeverity
+{
+    Info,
+    Warning,
+    Error
+}
+
+public sealed class MarkdownRenderDiagnostic(
+    MarkdownRenderDiagnosticSeverity severity,
+    string source,
+    string message,
+    MarkdownSourceSpan sourceSpan,
+    string? exceptionType = null)
+{
+    public MarkdownRenderDiagnosticSeverity Severity { get; } = severity;
+
+    public string Source { get; } = source;
+
+    public string Message { get; } = message;
+
+    public MarkdownSourceSpan SourceSpan { get; } = sourceSpan;
+
+    public string? ExceptionType { get; } = exceptionType;
+}
+
+public sealed class MarkdownRenderDiagnostics
+{
+    private readonly object _gate = new();
+    private readonly List<MarkdownRenderDiagnostic> _items = [];
+
+    public IReadOnlyList<MarkdownRenderDiagnostic> GetSnapshot()
+    {
+        lock (_gate)
+        {
+            return _items.ToArray();
+        }
+    }
+
+    public void Report(
+        MarkdownRenderDiagnosticSeverity severity,
+        string source,
+        string message,
+        MarkdownSourceSpan sourceSpan,
+        Exception? exception = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+
+        var diagnostic = new MarkdownRenderDiagnostic(
+            severity,
+            source,
+            message,
+            sourceSpan,
+            exception?.GetType().Name);
+
+        lock (_gate)
+        {
+            _items.Add(diagnostic);
+        }
     }
 }
 
@@ -565,6 +652,41 @@ public sealed class MarkdownEditorSession(
     public string Title { get; } = title;
 
     public string NodeKind { get; } = nodeKind;
+}
+
+public sealed class MarkdownEditTransaction(
+    MarkdownEditorSession session,
+    string previousMarkdown,
+    string updatedMarkdown,
+    string replacementMarkdown,
+    int revealStart,
+    int revealLength,
+    string operation)
+{
+    public MarkdownEditorSession Session { get; } = session;
+
+    public string PreviousMarkdown { get; } = previousMarkdown;
+
+    public string UpdatedMarkdown { get; } = updatedMarkdown;
+
+    public string ReplacementMarkdown { get; } = replacementMarkdown;
+
+    public int RevealStart { get; } = revealStart;
+
+    public int RevealLength { get; } = revealLength;
+
+    public string Operation { get; } = operation;
+}
+
+public sealed class MarkdownEditHistorySnapshot(int undoCount, int redoCount)
+{
+    public int UndoCount { get; } = undoCount;
+
+    public int RedoCount { get; } = redoCount;
+
+    public bool CanUndo => UndoCount > 0;
+
+    public bool CanRedo => RedoCount > 0;
 }
 
 public sealed class MarkdownEditorRenderRequest
@@ -873,7 +995,8 @@ public sealed class MarkdownRenderResult(
     InlineCollection inlines,
     MarkdownRenderResourceTracker resourceTracker,
     MarkdownParseResult parseResult,
-    MarkdownRenderMap renderMap)
+    MarkdownRenderMap renderMap,
+    IReadOnlyList<MarkdownRenderDiagnostic>? diagnostics = null)
 {
     public InlineCollection Inlines { get; } = inlines;
 
@@ -883,9 +1006,37 @@ public sealed class MarkdownRenderResult(
 
     public MarkdownRenderMap RenderMap { get; } = renderMap;
 
+    public IReadOnlyList<MarkdownRenderDiagnostic> Diagnostics { get; } = diagnostics ?? Array.Empty<MarkdownRenderDiagnostic>();
+
     public static MarkdownRenderResult Empty(MarkdownRenderResourceTracker resourceTracker)
     {
         return new MarkdownRenderResult(new InlineCollection(), resourceTracker, MarkdownParseResult.Empty, MarkdownRenderMap.Empty);
+    }
+}
+
+public sealed class MarkdownRenderCancellationScope : IDisposable
+{
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
+    private bool _disposed;
+
+    public CancellationToken Token => _cancellationTokenSource.Token;
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        try
+        {
+            _cancellationTokenSource.Cancel();
+        }
+        finally
+        {
+            _cancellationTokenSource.Dispose();
+        }
     }
 }
 

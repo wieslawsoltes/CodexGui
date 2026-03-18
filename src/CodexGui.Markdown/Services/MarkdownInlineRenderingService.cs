@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
@@ -61,6 +62,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             new SmartyPantOptions()
                 .Mapping
                 .ToDictionary(static pair => pair.Key, static pair => WebUtility.HtmlDecode(pair.Value)));
+    private static readonly TimeSpan RemoteImageTimeout = TimeSpan.FromSeconds(15);
     private static readonly HashSet<string> CommonCodeKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
         "abstract", "as", "async", "await", "base", "break", "case", "catch", "class", "const", "continue",
@@ -131,7 +133,8 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             renderedInlines,
             context.ResourceTracker,
             parseResult,
-            MarkdownRenderMapBuilder.Build(renderedInlines));
+            MarkdownRenderMapBuilder.Build(renderedInlines),
+            context.Diagnostics.GetSnapshot());
     }
 
     private static void RenderBlockSequence(ContainerBlock container, RenderState state, int lineBreaksBetweenBlocks)
@@ -339,9 +342,20 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                 addBlockControl: (control, hitTestHandler) => state.Output.Add(CreateInlineControlContainer(CreateRichBlockHost(control, state), state.SourceObject, MarkdownRenderedElementKind.BlockControl, hitTestHandler: hitTestHandler)),
                 resolveUri: url => ResolveUri(state.Options, url));
 
-            if (plugin.TryRender(pluginContext))
+            try
             {
-                return true;
+                if (plugin.TryRender(pluginContext))
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex) when (!IsFatalException(ex))
+            {
+                pluginContext.ReportDiagnostic(
+                    MarkdownRenderDiagnosticSeverity.Error,
+                    plugin.GetType().Name,
+                    $"Block rendering plugin '{plugin.GetType().Name}' failed: {ex.Message}",
+                    exception: ex);
             }
         }
 
@@ -1368,9 +1382,20 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                 addInlineControl: (control, hitTestHandler) => output.Add(CreateInlineControlContainer(control, state.SourceObject, MarkdownRenderedElementKind.InlineControl, hitTestHandler: hitTestHandler)),
                 resolveUri: url => ResolveUri(state.Options, url));
 
-            if (plugin.TryRender(pluginContext))
+            try
             {
-                return true;
+                if (plugin.TryRender(pluginContext))
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex) when (!IsFatalException(ex))
+            {
+                pluginContext.ReportDiagnostic(
+                    MarkdownRenderDiagnosticSeverity.Error,
+                    plugin.GetType().Name,
+                    $"Inline rendering plugin '{plugin.GetType().Name}' failed: {ex.Message}",
+                    exception: ex);
             }
         }
 
@@ -3177,18 +3202,47 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     {
         try
         {
-            using var response = await HttpClient.GetAsync(imageUri, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+            using var timeoutScope = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+            timeoutScope.CancelAfter(RemoteImageTimeout);
+
+            using var response = await HttpClient.GetAsync(
+                    imageUri,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    timeoutScope.Token)
+                .ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            await using var stream = await response.Content.ReadAsStreamAsync(timeoutScope.Token).ConfigureAwait(false);
             using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream).ConfigureAwait(false);
+            await stream.CopyToAsync(memoryStream, timeoutScope.Token).ConfigureAwait(false);
             memoryStream.Position = 0;
 
             var bitmap = new Bitmap(memoryStream);
             await Dispatcher.UIThread.InvokeAsync(() => ApplyLoadedImage(host, bitmap, altText, context));
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or InvalidOperationException)
+        catch (OperationCanceledException)
+        {
+            if (context.CancellationToken.IsCancellationRequested || !context.IsCurrentRender(context.RenderGeneration))
+            {
+                return;
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!context.IsCurrentRender(context.RenderGeneration))
+                {
+                    return;
+                }
+
+                context.Diagnostics.Report(
+                    MarkdownRenderDiagnosticSeverity.Warning,
+                    nameof(LoadRemoteImageAsync),
+                    $"Timed out while loading image '{imageUri}'.",
+                    MarkdownSourceSpan.Empty);
+                SetImageContent(host, CreateImageStatusContent(altText, originalUrl, "Image load timed out.", context));
+            });
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or InvalidOperationException)
         {
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
@@ -3197,6 +3251,12 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                     return;
                 }
 
+                context.Diagnostics.Report(
+                    MarkdownRenderDiagnosticSeverity.Warning,
+                    nameof(LoadRemoteImageAsync),
+                    $"Unable to load image '{imageUri}': {ex.Message}",
+                    MarkdownSourceSpan.Empty,
+                    ex);
                 SetImageContent(host, CreateImageStatusContent(altText, originalUrl, $"Unable to load image ({ex.Message}).", context));
             });
         }
@@ -3217,6 +3277,11 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private static void SetImageContent(Border host, Control content)
     {
         host.Child = content;
+    }
+
+    private static bool IsFatalException(Exception exception)
+    {
+        return exception is OutOfMemoryException or AccessViolationException;
     }
 
     private sealed record HighlightedCodeLine(List<HighlightedCodeSpan> Spans);
