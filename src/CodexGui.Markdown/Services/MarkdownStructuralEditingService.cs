@@ -392,10 +392,10 @@ internal sealed class MarkdownStructuralEditingService
                 }
 
                 var existingSourceText = context.SourceSpan.Slice(markdown);
-                var languageHint = ExtractCodeLanguageHint(existingSourceText);
+                var fenceInfo = ExtractCodeFenceInfo(existingSourceText);
                 var separator = ResolveBlockSeparator(existingSourceText, markdown);
-                var leftMarkdown = MarkdownSourceEditing.BuildCodeFence(languageHint, left, existingSourceText);
-                var rightMarkdown = MarkdownSourceEditing.BuildCodeFence(languageHint, right, existingSourceText);
+                var leftMarkdown = MarkdownSourceEditing.BuildCodeFenceWithInfoString(fenceInfo, left, existingSourceText);
+                var rightMarkdown = MarkdownSourceEditing.BuildCodeFenceWithInfoString(fenceInfo, right, existingSourceText);
                 var replacement = string.Concat(leftMarkdown, separator, rightMarkdown);
                 var revealStart = context.SourceSpan.Start + leftMarkdown.Length + separator.Length;
                 result = new MarkdownStructuralEditResult(
@@ -587,7 +587,7 @@ internal sealed class MarkdownStructuralEditingService
         }
     }
 
-    private static string ExtractCodeLanguageHint(string sourceText)
+    private static string ExtractCodeFenceInfo(string sourceText)
     {
         var normalized = MarkdownSourceEditing.NormalizeLineEndings(sourceText);
         if (normalized.Length == 0)

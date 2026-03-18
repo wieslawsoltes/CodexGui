@@ -41,7 +41,9 @@ internal sealed class MarkdownKeyboardShortcutService
 
         if (IsSlashKey(key) && modifiers == KeyModifiers.None)
         {
-            return MarkdownKeyboardShortcutAction.OpenSlashCommands;
+            return context.IsEditing
+                ? MarkdownKeyboardShortcutAction.None
+                : MarkdownKeyboardShortcutAction.OpenSlashCommands;
         }
 
         if (!context.IsEditing)

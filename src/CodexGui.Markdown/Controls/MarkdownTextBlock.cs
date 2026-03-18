@@ -276,12 +276,12 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
-        Focus();
-
         if (ShouldBypassSelectionPointerHandling())
         {
             return;
         }
+
+        Focus();
 
         var point = e.GetPosition(this);
         var hit = HitTestMarkdown(point);
@@ -674,6 +674,11 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
 
     private bool TryOpenSlashCommandPalette()
     {
+        if (!IsEditingEnabled)
+        {
+            return false;
+        }
+
         if (!TryResolveInteractionTarget(out var session, out var hit) || _lastRenderResult is null)
         {
             return false;
@@ -738,6 +743,11 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
 
     private bool TryApplyStructuralAction(MarkdownKeyboardShortcutAction action)
     {
+        if (!IsEditingEnabled)
+        {
+            return false;
+        }
+
         if (!TryResolveInteractionTarget(out var session, out _) || _lastRenderResult is null)
         {
             return false;

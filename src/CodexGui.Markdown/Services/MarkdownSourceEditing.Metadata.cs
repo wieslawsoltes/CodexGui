@@ -20,7 +20,8 @@ internal static partial class MarkdownSourceEditing
         var lines = normalized.Split('\n', StringSplitOptions.None);
         if (lines.Length >= 2 &&
             string.Equals(lines[0].Trim(), "---", StringComparison.Ordinal) &&
-            string.Equals(lines[^1].Trim(), "---", StringComparison.Ordinal))
+            (string.Equals(lines[^1].Trim(), "---", StringComparison.Ordinal) ||
+             string.Equals(lines[^1].Trim(), "...", StringComparison.Ordinal)))
         {
             return string.Join('\n', lines[1..^1]);
         }

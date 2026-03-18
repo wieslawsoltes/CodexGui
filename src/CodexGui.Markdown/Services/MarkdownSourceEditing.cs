@@ -132,14 +132,21 @@ internal static partial class MarkdownSourceEditing
 
     public static string BuildCodeFence(string languageHint, string code, string? existingSourceText = null)
     {
+        return BuildCodeFenceWithInfoString(NormalizeLanguageHint(languageHint), code, existingSourceText);
+    }
+
+    internal static string BuildCodeFenceWithInfoString(string? infoString, string code, string? existingSourceText = null)
+    {
         var normalizedCode = NormalizeBlockText(code);
-        var normalizedLanguage = NormalizeLanguageHint(languageHint);
+        var normalizedInfo = string.IsNullOrWhiteSpace(infoString)
+            ? string.Empty
+            : NormalizeLineEndings(infoString).Replace('\n', ' ').Trim();
         var fence = ResolveCodeFenceDelimiter(normalizedCode, existingSourceText);
         var lineEnding = DetectLineEnding(existingSourceText);
         normalizedCode = NormalizeLineEndings(normalizedCode, lineEnding);
-        return string.IsNullOrWhiteSpace(normalizedLanguage)
+        return string.IsNullOrWhiteSpace(normalizedInfo)
             ? string.Concat(fence, lineEnding, normalizedCode, lineEnding, fence)
-            : string.Concat(fence, normalizedLanguage, lineEnding, normalizedCode, lineEnding, fence);
+            : string.Concat(fence, normalizedInfo, lineEnding, normalizedCode, lineEnding, fence);
     }
 
     public static string BuildBlockInsertionReplacement(
