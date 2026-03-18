@@ -4,8 +4,10 @@
     <Project Path="src/CodexGui.AppServer/CodexGui.AppServer.csproj" />
     <Project Path="src/CodexGui.Markdown/CodexGui.Markdown.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.Alerts/CodexGui.Markdown.Plugin.Alerts.csproj" />
+    <Project Path="src/CodexGui.Markdown.Plugin.Collapsible/CodexGui.Markdown.Plugin.Collapsible.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.CustomContainers/CodexGui.Markdown.Plugin.CustomContainers.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.DefinitionLists/CodexGui.Markdown.Plugin.DefinitionLists.csproj" />
+    <Project Path="src/CodexGui.Markdown.Plugin.Embeds/CodexGui.Markdown.Plugin.Embeds.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.Figures/CodexGui.Markdown.Plugin.Figures.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.Footers/CodexGui.Markdown.Plugin.Footers.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.Math/CodexGui.Markdown.Plugin.Math.csproj" />

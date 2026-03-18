@@ -29,8 +29,10 @@
   <ItemGroup>
     <ProjectReference Include="..\CodexGui.Markdown\CodexGui.Markdown.csproj" />
     <ProjectReference Include="..\CodexGui.Markdown.Plugin.Alerts\CodexGui.Markdown.Plugin.Alerts.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.Collapsible\CodexGui.Markdown.Plugin.Collapsible.csproj" />
     <ProjectReference Include="..\CodexGui.Markdown.Plugin.CustomContainers\CodexGui.Markdown.Plugin.CustomContainers.csproj" />
     <ProjectReference Include="..\CodexGui.Markdown.Plugin.DefinitionLists\CodexGui.Markdown.Plugin.DefinitionLists.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.Embeds\CodexGui.Markdown.Plugin.Embeds.csproj" />
     <ProjectReference Include="..\CodexGui.Markdown.Plugin.Figures\CodexGui.Markdown.Plugin.Figures.csproj" />
     <ProjectReference Include="..\CodexGui.Markdown.Plugin.Footers\CodexGui.Markdown.Plugin.Footers.csproj" />
     <ProjectReference Include="..\CodexGui.Markdown.Plugin.Math\CodexGui.Markdown.Plugin.Math.csproj" />

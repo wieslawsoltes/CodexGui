@@ -15,12 +15,17 @@ public static class MarkdownRenderingServices
 
     public static IMarkdownRenderController CreateController(params IMarkdownPlugin[] plugins)
     {
-        return CreateController(plugins.AsEnumerable());
+        return CreateControllerFromRegistry(CreateRegistry(plugins));
     }
 
     public static IMarkdownRenderController CreateController(IEnumerable<IMarkdownPlugin>? plugins)
     {
-        var registry = CreateRegistry(plugins);
+        return CreateControllerFromRegistry(CreateRegistry(plugins));
+    }
+
+    public static IMarkdownRenderController CreateControllerFromRegistry(MarkdownPluginRegistry registry)
+    {
+        ArgumentNullException.ThrowIfNull(registry);
 
         return new MarkdownRenderController(
             new MarkdownParsingService(registry.ParserPlugins),
@@ -34,16 +39,26 @@ public static class MarkdownRenderingServices
 
     public static IMarkdownEditingService CreateEditingService(params IMarkdownPlugin[] plugins)
     {
-        return CreateEditingService(plugins.AsEnumerable());
+        return CreateEditingServiceFromRegistry(CreateRegistry(plugins));
     }
 
     public static IMarkdownEditingService CreateEditingService(IEnumerable<IMarkdownPlugin>? plugins)
     {
-        var registry = CreateRegistry(plugins);
+        return CreateEditingServiceFromRegistry(CreateRegistry(plugins));
+    }
+
+    public static IMarkdownEditingService CreateEditingServiceFromRegistry(MarkdownPluginRegistry registry)
+    {
+        ArgumentNullException.ThrowIfNull(registry);
         return new MarkdownEditingService(registry.EditorPlugins, registry.BlockTemplateProviders);
     }
 
-    private static MarkdownPluginRegistry CreateRegistry(IEnumerable<IMarkdownPlugin>? plugins)
+    public static MarkdownPluginRegistry CreateRegistry(params IMarkdownPlugin[] plugins)
+    {
+        return CreateRegistry(plugins.AsEnumerable());
+    }
+
+    public static MarkdownPluginRegistry CreateRegistry(IEnumerable<IMarkdownPlugin>? plugins)
     {
         var registry = new MarkdownPluginRegistry();
         MarkdownBuiltInEditorPlugins.Register(registry);

@@ -37,8 +37,21 @@ internal sealed class MermaidBlockTemplateProvider : IMarkdownBlockTemplateProvi
             "mermaid-diagram-block",
             "Mermaid diagram",
             MarkdownEditorFeature.Mermaid,
-            MermaidDiagramEditorPlugin.BuildMermaidFence("flowchart TD\n    Start[Start] --> Decide{Choice}\n    Decide -->|Yes| Ship[Ship it]\n    Decide -->|No| Revise[Revise]"),
+            MermaidDiagramEditorPlugin.BuildMermaidBlock(
+                "flowchart TD\n    Start[Start] --> Decide{Choice}\n    Decide -->|Yes| Ship[Ship it]\n    Decide -->|No| Revise[Revise]",
+                MermaidBlockSyntax.CodeFence,
+                string.Empty),
             "Insert a Mermaid diagram block.");
+
+        yield return new MarkdownBlockTemplate(
+            "mermaid-diagram-container",
+            "Mermaid container",
+            MarkdownEditorFeature.Mermaid,
+            MermaidDiagramEditorPlugin.BuildMermaidBlock(
+                "sequenceDiagram\n    participant User\n    participant App\n    User->>App: Request preview\n    App-->>User: Rendered diagram",
+                MermaidBlockSyntax.CustomContainer,
+                string.Empty),
+            "Insert a Mermaid diagram that preserves :::diagram mermaid container syntax.");
     }
 }
 
@@ -219,6 +232,11 @@ internal static class MermaidSyntax
             .TrimEnd('\n');
     }
 
+    public static string NormalizeArguments(string? arguments)
+    {
+        return arguments?.Trim() ?? string.Empty;
+    }
+
     private static bool IsMermaidLanguage(string? languageHint)
     {
         return MermaidLanguageAliases.Contains(NormalizeDescriptor(languageHint));
@@ -263,6 +281,12 @@ internal sealed class MermaidDiagramBlockRenderingPlugin : IMarkdownBlockRenderi
 
 internal sealed class MermaidDiagramEditorPlugin : IMarkdownEditorPlugin
 {
+    private static readonly MermaidBlockSyntaxOption[] SyntaxOptions =
+    [
+        new(MermaidBlockSyntax.CodeFence, "Code fence", "Preserve ```mermaid fenced syntax for standard markdown documents."),
+        new(MermaidBlockSyntax.CustomContainer, "Container", "Preserve :::diagram mermaid container syntax for grouped layouts.")
+    ];
+
     public string EditorId => MermaidMarkdownPlugin.MermaidEditorId;
 
     public MarkdownEditorFeature Feature => MarkdownEditorFeature.Mermaid;
@@ -301,10 +325,30 @@ internal sealed class MermaidDiagramEditorPlugin : IMarkdownEditorPlugin
         }
 
         var sourceText = MermaidSyntax.NormalizeCode(mermaidBlock.Lines.ToString());
+        var syntaxComboBox = new ComboBox
+        {
+            ItemsSource = SyntaxOptions,
+            SelectedItem = ResolveSyntaxOption(mermaidBlock.Syntax),
+            MinWidth = 180,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+            Background = MarkdownEditorUiFactory.InputBackground,
+            BorderBrush = MarkdownEditorUiFactory.BorderBrush,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(8, 6)
+        };
+        var syntaxDescription = MarkdownEditorUiFactory.CreateInfoText(((MermaidBlockSyntaxOption?)syntaxComboBox.SelectedItem)?.Description ?? "Mermaid diagram");
+        var argumentsTextBox = MarkdownEditorUiFactory.CreateTextEditor(mermaidBlock.DiagramArguments, acceptsReturn: false, minHeight: 42);
+        MarkdownEditorUiFactory.ApplyInlineMetadataStyle(argumentsTextBox, context.RenderContext.FontSize);
         var textBox = MarkdownEditorUiFactory.CreateCodeEditor(sourceText);
         if (context.PresentationMode == MarkdownEditorPresentationMode.Inline)
         {
             MarkdownEditorUiFactory.ApplyInlineCodeStyle(textBox, context.RenderContext.FontSize);
+        }
+        else
+        {
+            argumentsTextBox.FontSize = Math.Max(context.RenderContext.FontSize - 1, 12);
+            argumentsTextBox.FontFamily = context.RenderContext.FontFamily;
+            argumentsTextBox.Foreground = context.RenderContext.Foreground ?? MarkdownEditorUiFactory.EditorForeground;
         }
 
         var previewHost = new Border
@@ -318,6 +362,7 @@ internal sealed class MermaidDiagramEditorPlugin : IMarkdownEditorPlugin
 
         void UpdatePreview()
         {
+            syntaxDescription.Text = ((MermaidBlockSyntaxOption?)syntaxComboBox.SelectedItem)?.Description ?? "Mermaid diagram";
             var renderedDiagram = MermaidDiagramViewFactory.Create(
                 MermaidSyntax.NormalizeCode(textBox.Text ?? string.Empty),
                 context.AvailableWidth,
@@ -325,6 +370,8 @@ internal sealed class MermaidDiagramEditorPlugin : IMarkdownEditorPlugin
             previewHost.Child = renderedDiagram.Control;
         }
 
+        syntaxComboBox.SelectionChanged += (_, _) => UpdatePreview();
+        argumentsTextBox.TextChanged += (_, _) => UpdatePreview();
         textBox.TextChanged += (_, _) => UpdatePreview();
         UpdatePreview();
 
@@ -334,11 +381,19 @@ internal sealed class MermaidDiagramEditorPlugin : IMarkdownEditorPlugin
         };
         if (context.PresentationMode == MarkdownEditorPresentationMode.Card)
         {
-            body.Children.Add(MarkdownEditorUiFactory.CreateInfoText("Edit Mermaid source and review the live native preview below before applying the fenced diagram block."));
+            body.Children.Add(MarkdownEditorUiFactory.CreateInfoText("Edit Mermaid source, preserve the preferred block syntax, and review the live native preview before applying changes."));
         }
 
-        string BuildCurrentMarkdown() => BuildMermaidFence(textBox.Text ?? string.Empty);
+        string BuildCurrentMarkdown() => BuildMermaidBlock(
+            textBox.Text ?? string.Empty,
+            ((MermaidBlockSyntaxOption?)syntaxComboBox.SelectedItem)?.Syntax ?? mermaidBlock.Syntax,
+            argumentsTextBox.Text);
 
+        body.Children.Add(MarkdownEditorUiFactory.CreateFieldLabel("Block syntax"));
+        body.Children.Add(syntaxComboBox);
+        body.Children.Add(syntaxDescription);
+        body.Children.Add(MarkdownEditorUiFactory.CreateFieldLabel("Descriptor arguments"));
+        body.Children.Add(argumentsTextBox);
         body.Children.Add(textBox);
         body.Children.Add(previewHost);
 
@@ -353,10 +408,64 @@ internal sealed class MermaidDiagramEditorPlugin : IMarkdownEditorPlugin
             buildBlockMarkdownForActions: BuildCurrentMarkdown);
     }
 
-    internal static string BuildMermaidFence(string source)
+    internal static string BuildMermaidBlock(string source, MermaidBlockSyntax syntax, string? arguments)
     {
         var normalized = MermaidSyntax.NormalizeCode(source);
-        var fence = normalized.Contains("```", StringComparison.Ordinal) ? "~~~~" : "```";
-        return $"{fence}mermaid\n{normalized}\n{fence}";
+        var normalizedArguments = MermaidSyntax.NormalizeArguments(arguments);
+        return syntax switch
+        {
+            MermaidBlockSyntax.CustomContainer => BuildMermaidContainer(normalized, normalizedArguments),
+            _ => BuildMermaidFence(normalized, normalizedArguments)
+        };
+    }
+
+    private static MermaidBlockSyntaxOption ResolveSyntaxOption(MermaidBlockSyntax syntax)
+    {
+        return SyntaxOptions.FirstOrDefault(option => option.Syntax == syntax) ?? SyntaxOptions[0];
+    }
+
+    private static string BuildMermaidFence(string normalizedSource, string normalizedArguments)
+    {
+        var fence = normalizedSource.Contains("```", StringComparison.Ordinal) ? "~~~~" : "```";
+        var descriptor = normalizedArguments.Length == 0 ? "mermaid" : $"mermaid {normalizedArguments}";
+        return $"{fence}{descriptor}\n{normalizedSource}\n{fence}";
+    }
+
+    private static string BuildMermaidContainer(string normalizedSource, string normalizedArguments)
+    {
+        var fence = new string(':', ResolveContainerFenceLength(normalizedSource, preferredFenceLength: 3));
+        var descriptor = normalizedArguments.Length == 0 ? "diagram mermaid" : $"diagram mermaid {normalizedArguments}";
+        return $"{fence}{descriptor}\n{normalizedSource}\n{fence}";
+    }
+
+    private static int ResolveContainerFenceLength(string normalizedSource, int preferredFenceLength)
+    {
+        var requiredFenceLength = Math.Max(preferredFenceLength, 3);
+        if (normalizedSource.Length == 0)
+        {
+            return requiredFenceLength;
+        }
+
+        foreach (var line in MermaidSyntax.NormalizeCode(normalizedSource).Split('\n', StringSplitOptions.None))
+        {
+            var trimmed = line.TrimStart();
+            var colonCount = 0;
+            while (colonCount < trimmed.Length && trimmed[colonCount] == ':')
+            {
+                colonCount++;
+            }
+
+            if (colonCount >= requiredFenceLength)
+            {
+                requiredFenceLength = colonCount + 1;
+            }
+        }
+
+        return requiredFenceLength;
+    }
+
+    private sealed record MermaidBlockSyntaxOption(MermaidBlockSyntax Syntax, string Label, string Description)
+    {
+        public override string ToString() => Label;
     }
 }

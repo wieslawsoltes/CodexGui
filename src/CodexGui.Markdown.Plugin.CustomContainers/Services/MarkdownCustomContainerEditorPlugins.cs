@@ -35,14 +35,14 @@ internal sealed class CustomContainerBlockTemplateProvider : IMarkdownBlockTempl
             "Insert a warning-style custom container.");
 
         yield return new MarkdownBlockTemplate(
-            "custom-container-neutral",
-            "Neutral container",
+            "custom-container-panel",
+            "Panel container",
             MarkdownEditorFeature.CustomContainer,
             MarkdownCustomContainerSyntax.BuildCustomContainer(
-                "details",
+                "panel",
                 string.Empty,
                 "Use a neutral custom container for grouped notes or supporting context."),
-            "Insert a neutral custom container.");
+            "Insert a neutral panel container. Use the dedicated collapsible plugin for expandable details blocks.");
     }
 }
 
