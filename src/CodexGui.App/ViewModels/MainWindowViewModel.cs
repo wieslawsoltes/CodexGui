@@ -7,8 +7,6 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using Avalonia.Media;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CodexGui.App.Services;
@@ -20,6 +18,18 @@ namespace CodexGui.App.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 {
     private static readonly string[] NotificationOptOutMethods = [];
+
+    private sealed record ThreadDetailProjection(
+        string WorkspaceTitle,
+        string WorkspaceSubtitle,
+        string? ActiveTurnId,
+        IReadOnlyList<ConversationItemViewModel> Items);
+
+    private sealed record ThreadDetailProjectionContext(
+        IReadOnlyDictionary<string, string> TurnDiffs,
+        IReadOnlyDictionary<string, string> FileChangeDiffs,
+        IReadOnlyDictionary<string, TurnPlanUpdatedNotification> TurnPlans,
+        string FallbackWorkingDirectory);
 
     private readonly ICodexSessionService _sessionService;
     private readonly IUiDispatcher _uiDispatcher;
@@ -33,6 +43,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private DateTimeOffset _lastNotificationReceivedAt = DateTimeOffset.MinValue;
     private string? _selectedThreadId;
     private bool _isApplyingThreadList;
+    private int _initialConnectionStarted;
 
     private string _accountSummary = "Pending";
     private string _modelSummary = "No catalog";
@@ -106,7 +117,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         IPendingInteractionFactory? pendingInteractionFactory = null)
     {
         _sessionService = sessionService ?? NullCodexSessionService.Instance;
-        _uiDispatcher = uiDispatcher ?? new AvaloniaUiDispatcher();
+        _uiDispatcher = uiDispatcher ?? new ImmediateUiDispatcher();
         _gitDiffService = gitDiffService ?? new GitDiffService();
         _pendingInteractionFactory = pendingInteractionFactory ?? new PendingInteractionFactory();
 
@@ -212,7 +223,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
     }
 
-    public IBrush ConnectionBrush => IsConnected ? ShellBrushes.Green : IsBusy ? ShellBrushes.Blue : ShellBrushes.Neutral;
+    public ShellTone ConnectionTone => IsConnected ? ShellTones.Green : IsBusy ? ShellTones.Blue : ShellTones.Neutral;
 
     partial void OnSelectedThreadChanged(ThreadListEntryViewModel? value)
     {
@@ -253,13 +264,13 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         {
             _uiDispatcher.Post(() =>
             {
-                OnPropertyChanged(nameof(ConnectionBrush));
+                OnPropertyChanged(nameof(ConnectionTone));
                 NotifyCommandStates();
             });
             return;
         }
 
-        OnPropertyChanged(nameof(ConnectionBrush));
+        OnPropertyChanged(nameof(ConnectionTone));
         NotifyCommandStates();
     }
 
@@ -269,13 +280,13 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         {
             _uiDispatcher.Post(() =>
             {
-                OnPropertyChanged(nameof(ConnectionBrush));
+                OnPropertyChanged(nameof(ConnectionTone));
                 NotifyCommandStates();
             });
             return;
         }
 
-        OnPropertyChanged(nameof(ConnectionBrush));
+        OnPropertyChanged(nameof(ConnectionTone));
         NotifyCommandStates();
     }
 
@@ -308,6 +319,27 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         SeedConversationPlaceholder();
         SeedPhaseTwoRuntimeState();
         NotifyCollectionStateChanged();
+    }
+
+    internal async Task EnsureInitialConnectionAsync()
+    {
+        if (IsConnected)
+        {
+            Interlocked.Exchange(ref _initialConnectionStarted, 1);
+            return;
+        }
+
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (Interlocked.CompareExchange(ref _initialConnectionStarted, 1, 0) != 0)
+        {
+            return;
+        }
+
+        await ConnectAsync().ConfigureAwait(false);
     }
 
     private bool CanConnect() => !IsBusy && !IsConnected;
@@ -880,11 +912,19 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 return;
             }
 
+            var projectionContext = await _uiDispatcher.InvokeAsync(CaptureThreadDetailProjectionContext).ConfigureAwait(false);
+            var projection = await Task.Run(() => BuildThreadDetailProjection(result.Thread, projectionContext), linkedCancellation.Token).ConfigureAwait(false);
+
+            if (linkedCancellation.IsCancellationRequested)
+            {
+                return;
+            }
+
             await _uiDispatcher.InvokeAsync(() =>
             {
                 if (HasThreadDetailChanged(result.Thread))
                 {
-                    ApplyThreadDetail(result.Thread);
+                    ApplyThreadDetail(result.Thread, projection);
                 }
             });
         }
@@ -1025,19 +1065,36 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             thread.Preview ?? string.Empty);
     }
 
-    private void ApplyThreadDetail(ThreadDetail thread)
+    private ThreadDetailProjectionContext CaptureThreadDetailProjectionContext()
+    {
+        return new ThreadDetailProjectionContext(
+            new Dictionary<string, string>(_latestTurnDiffs, StringComparer.Ordinal),
+            new Dictionary<string, string>(_latestFileChangeDiffs, StringComparer.Ordinal),
+            new Dictionary<string, TurnPlanUpdatedNotification>(_latestTurnPlans, StringComparer.Ordinal),
+            string.IsNullOrWhiteSpace(WorkingDirectory) ? Environment.CurrentDirectory : WorkingDirectory);
+    }
+
+    private ThreadDetailProjection BuildThreadDetailProjection(ThreadDetail thread, ThreadDetailProjectionContext context)
+    {
+        return new ThreadDetailProjection(
+            thread.Name ?? thread.Preview ?? thread.Id ?? "Codex thread",
+            $"{thread.ModelProvider ?? "openai"} · {thread.Status?.Type ?? "notLoaded"} · {FormatRelativeTime(thread.UpdatedAt ?? thread.CreatedAt)}",
+            thread.Turns?.LastOrDefault(static turn => string.Equals(turn.Status, "inProgress", StringComparison.OrdinalIgnoreCase))?.Id,
+            BuildConversationItems(thread, context));
+    }
+
+    private void ApplyThreadDetail(ThreadDetail thread, ThreadDetailProjection projection)
     {
         _currentThreadDetail = thread;
-        _activeTurnId = thread.Turns?.LastOrDefault(static turn => string.Equals(turn.Status, "inProgress", StringComparison.OrdinalIgnoreCase))?.Id;
-        CurrentWorkspaceTitle = thread.Name ?? thread.Preview ?? thread.Id ?? "Codex thread";
-        CurrentWorkspaceSubtitle = $"{thread.ModelProvider ?? "openai"} · {thread.Status?.Type ?? "notLoaded"} · {FormatRelativeTime(thread.UpdatedAt ?? thread.CreatedAt)}";
+        _activeTurnId = projection.ActiveTurnId;
+        CurrentWorkspaceTitle = projection.WorkspaceTitle;
+        CurrentWorkspaceSubtitle = projection.WorkspaceSubtitle;
 
         var selectedItemId = SelectedConversationItem?.ItemId;
-        var items = BuildConversationItems(thread);
-        ReplaceCollection(ConversationItems, items);
-        SelectedConversationItem = items.FirstOrDefault(item => item.ItemId == selectedItemId)
-            ?? items.FirstOrDefault(item => item.Kind is "fileChange" or "turnDiff" or "commandExecution" or "mcpToolCall" or "dynamicToolCall")
-            ?? items.FirstOrDefault();
+        ReplaceCollection(ConversationItems, projection.Items);
+        SelectedConversationItem = projection.Items.FirstOrDefault(item => item.ItemId == selectedItemId)
+            ?? projection.Items.FirstOrDefault(item => item.Kind is "fileChange" or "turnDiff" or "commandExecution" or "mcpToolCall" or "dynamicToolCall")
+            ?? projection.Items.FirstOrDefault();
 
         NotifyCollectionStateChanged();
         NotifyCommandStates();
@@ -1064,9 +1121,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 "session-summary.md",
                 "No conversation selected",
                 BuildWelcomeDocument(),
-                ShellBrushes.Green,
-                ShellBrushes.Paper,
-                ShellBrushes.TextPrimary)
+                ShellTones.Green,
+                ShellTones.Paper,
+                ShellTones.TextPrimary)
         ]);
         SelectedConversationItem = null;
     }
@@ -1075,18 +1132,18 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         var chips = new List<StatusChipViewModel>
         {
-            new("Connection", ConnectionState, ConnectionBrush, IsConnected ? ShellBrushes.GreenSoft : ShellBrushes.NeutralSoft),
-            new("Account", _accountSummary, ShellBrushes.Blue, ShellBrushes.BlueSoft),
-            new("Rate limits", _rateLimitSummary, ShellBrushes.Amber, ShellBrushes.AmberSoft),
-            new("Model", _modelSummary, ShellBrushes.Green, ShellBrushes.GreenSoft),
-            new("Threads", _threadSummary, ShellBrushes.Amber, ShellBrushes.AmberSoft),
-            new("Connectors", _connectorSummary, ShellBrushes.Blue, ShellBrushes.BlueSoft),
-            new("Access", _accessSummary, ShellBrushes.Neutral, ShellBrushes.NeutralSoft)
+            new("Connection", ConnectionState, ConnectionTone, IsConnected ? ShellTones.GreenSoft : ShellTones.NeutralSoft),
+            new("Account", _accountSummary, ShellTones.Blue, ShellTones.BlueSoft),
+            new("Rate limits", _rateLimitSummary, ShellTones.Amber, ShellTones.AmberSoft),
+            new("Model", _modelSummary, ShellTones.Green, ShellTones.GreenSoft),
+            new("Threads", _threadSummary, ShellTones.Amber, ShellTones.AmberSoft),
+            new("Connectors", _connectorSummary, ShellTones.Blue, ShellTones.BlueSoft),
+            new("Access", _accessSummary, ShellTones.Neutral, ShellTones.NeutralSoft)
         };
 
         if (HasActiveLogin)
         {
-            chips.Add(new StatusChipViewModel("Login", "In progress", ShellBrushes.Blue, ShellBrushes.BlueSoft));
+            chips.Add(new StatusChipViewModel("Login", "In progress", ShellTones.Blue, ShellTones.BlueSoft));
         }
 
         ReplaceCollection(StatusChips, chips);
@@ -1096,10 +1153,10 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         var accent = (thread.Status?.Type ?? "notLoaded") switch
         {
-            "active" => ShellBrushes.Green,
-            "idle" => ShellBrushes.Blue,
-            "systemError" => ShellBrushes.Red,
-            _ => ShellBrushes.Neutral
+            "active" => ShellTones.Green,
+            "idle" => ShellTones.Blue,
+            "systemError" => ShellTones.Red,
+            _ => ShellTones.Neutral
         };
 
         return new ThreadListEntryViewModel(
@@ -1110,7 +1167,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             thread.ModelProvider ?? "openai",
             thread.Ephemeral ? "ephemeral" : thread.Status?.Type ?? "notLoaded",
             accent,
-            ShellBrushes.Paper,
+            ShellTones.Paper,
             thread.Status?.Type ?? "notLoaded");
     }
 
@@ -1427,8 +1484,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             documentName: "apps-and-skills.md",
             documentMeta: $"{appCount} connectors · {skillCount} skills",
             documentText: BuildAppsAndSkillsDocument(appData, skillGroups),
-            accentBrush: ShellBrushes.Blue,
-            surfaceBrush: ShellBrushes.BlueSoft);
+            accentTone: ShellTones.Blue,
+            surfaceTone: ShellTones.BlueSoft);
     }
 
     private ConversationItemViewModel BuildSettingsCard(
@@ -1500,12 +1557,12 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             documentName: "settings-and-policies.md",
             documentMeta: "Runtime settings snapshot",
             documentText: BuildSettingsDocument(requirements, configRead, experimentalFeatures, mcpServerStatuses, loadedThreads),
-            accentBrush: ShellBrushes.Neutral,
-            surfaceBrush: ShellBrushes.NeutralSoft);
+            accentTone: ShellTones.Neutral,
+            surfaceTone: ShellTones.NeutralSoft);
     }
 
     private static string BuildAppsAndSkillsDocument(
-        IReadOnlyCollection<AppInfo> apps,
+        IReadOnlyCollection<CodexGui.AppServer.Models.AppInfo> apps,
         IReadOnlyCollection<SkillsByWorkingDirectory> skillsByDirectory)
     {
         var lines = new List<string>
@@ -1956,7 +2013,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             "# CodexGui session summary",
             "",
             "## Current phase",
-            "- Avalonia client for Codex app-server",
+            "- Uno Platform desktop client for Codex app-server",
             "- Light Codex-style shell with thread rail, conversation view, and composer",
             "- Turn authoring and approval prompts are enabled",
             "- Commands, diffs, and tool calls render with item-specific detail",
@@ -2118,31 +2175,31 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         };
     }
 
-    private static IBrush AccentForItem(string? itemType)
+    private static ShellTone AccentForItem(string? itemType)
     {
         return itemType switch
         {
-            "userMessage" => ShellBrushes.Blue,
-            "agentMessage" => ShellBrushes.Green,
-            "reasoning" => ShellBrushes.Amber,
-            "plan" => ShellBrushes.Amber,
-            "commandExecution" => ShellBrushes.Blue,
-            "fileChange" => ShellBrushes.Amber,
-            _ => ShellBrushes.Neutral
+            "userMessage" => ShellTones.Blue,
+            "agentMessage" => ShellTones.Green,
+            "reasoning" => ShellTones.Amber,
+            "plan" => ShellTones.Amber,
+            "commandExecution" => ShellTones.Blue,
+            "fileChange" => ShellTones.Amber,
+            _ => ShellTones.Neutral
         };
     }
 
-    private static IBrush SurfaceForItem(string? itemType)
+    private static ShellTone SurfaceForItem(string? itemType)
     {
         return itemType switch
         {
-            "userMessage" => ShellBrushes.BlueSoft,
-            "agentMessage" => ShellBrushes.Paper,
-            "reasoning" => ShellBrushes.AmberSoft,
-            "plan" => ShellBrushes.AmberSoft,
-            "commandExecution" => ShellBrushes.BlueSoft,
-            "fileChange" => ShellBrushes.AmberSoft,
-            _ => ShellBrushes.NeutralSoft
+            "userMessage" => ShellTones.BlueSoft,
+            "agentMessage" => ShellTones.Paper,
+            "reasoning" => ShellTones.AmberSoft,
+            "plan" => ShellTones.AmberSoft,
+            "commandExecution" => ShellTones.BlueSoft,
+            "fileChange" => ShellTones.AmberSoft,
+            _ => ShellTones.NeutralSoft
         };
     }
 
@@ -3366,8 +3423,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             documentName: $"turn-{ShortenIdentifier(resolvedTurnId)}-reasoning-live.md",
             documentMeta: "Streaming reasoning",
             documentText: BuildLiveReasoningDocument(resolvedTurnId, itemId, summaryText, contentText),
-            accentBrush: ShellBrushes.Amber,
-            surfaceBrush: ShellBrushes.PaperMuted);
+            accentTone: ShellTones.Amber,
+            surfaceTone: ShellTones.PaperMuted);
 
         UpsertLiveConversationItem(card);
     }
@@ -3627,8 +3684,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 : $"turn-{ShortenIdentifier(turnId)}-tool-progress.log",
             documentMeta: "Streaming progress",
             documentText: BuildLiveToolProgressDocument(turnId, itemId, itemKind, progressText),
-            accentBrush: string.Equals(itemKind, "dynamicToolCall", StringComparison.Ordinal) ? ShellBrushes.Blue : ShellBrushes.Amber,
-            surfaceBrush: ShellBrushes.ToolSurface);
+            accentTone: string.Equals(itemKind, "dynamicToolCall", StringComparison.Ordinal) ? ShellTones.Blue : ShellTones.Amber,
+            surfaceTone: ShellTones.ToolSurface);
 
         UpsertLiveConversationItem(liveItem);
     }
@@ -3695,8 +3752,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             documentName: $"turn-{ShortenIdentifier(turnId)}-diff.patch",
             documentMeta: $"{diff.Split('\n').Length} lines",
             documentText: $"# Aggregated Diff\n\n{diff}",
-            accentBrush: ShellBrushes.Amber,
-            surfaceBrush: ShellBrushes.AmberSoft);
+            accentTone: ShellTones.Amber,
+            surfaceTone: ShellTones.AmberSoft);
 
         var index = FindConversationItemIndexById(itemId);
         if (index >= 0)
@@ -3884,10 +3941,10 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         statusType ??= "notLoaded";
         var accent = statusType switch
         {
-            "active" => ShellBrushes.Green,
-            "idle" => ShellBrushes.Blue,
-            "systemError" => ShellBrushes.Red,
-            _ => ShellBrushes.Neutral
+            "active" => ShellTones.Green,
+            "idle" => ShellTones.Blue,
+            "systemError" => ShellTones.Red,
+            _ => ShellTones.Neutral
         };
 
         var badge = string.Equals(existing.Badge, "ephemeral", StringComparison.Ordinal)
@@ -3898,7 +3955,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         {
             StatusType = statusType,
             Badge = string.IsNullOrWhiteSpace(badge) ? existing.Badge : badge,
-            AccentBrush = accent,
+            AccentTone = accent,
             TimeLabel = "just now"
         };
     }
@@ -3940,11 +3997,11 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         var existing = RecentThreads[index];
         var accent = statusType switch
         {
-            "archived" => ShellBrushes.Neutral,
-            "closed" => ShellBrushes.Red,
-            "active" => ShellBrushes.Green,
-            "idle" => ShellBrushes.Blue,
-            _ => ShellBrushes.Neutral
+            "archived" => ShellTones.Neutral,
+            "closed" => ShellTones.Red,
+            "active" => ShellTones.Green,
+            "idle" => ShellTones.Blue,
+            _ => ShellTones.Neutral
         };
 
         var badge = string.Equals(existing.Badge, "ephemeral", StringComparison.Ordinal)
@@ -3955,7 +4012,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         {
             StatusType = statusType,
             Badge = string.IsNullOrWhiteSpace(badge) ? existing.Badge : badge,
-            AccentBrush = accent,
+            AccentTone = accent,
             TimeLabel = "just now"
         };
 
@@ -3980,7 +4037,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         return -1;
     }
 
-    private List<ConversationItemViewModel> BuildConversationItems(ThreadDetail thread)
+    private List<ConversationItemViewModel> BuildConversationItems(ThreadDetail thread, ThreadDetailProjectionContext context)
     {
         var items = new List<ConversationItemViewModel>();
 
@@ -3991,11 +4048,11 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
             foreach (var item in turn.Items ?? Array.Empty<ThreadItem>())
             {
-                items.Add(CreateConversationItem(turn, item, turnId, index));
+                items.Add(CreateConversationItem(thread, turn, item, turnId, index, context));
                 index++;
             }
 
-            if (_latestTurnDiffs.TryGetValue(turnId, out var diff) && items.All(item => item.TurnId != turnId || item.Kind != "fileChange"))
+            if (context.TurnDiffs.TryGetValue(turnId, out var diff) && items.All(item => item.TurnId != turnId || item.Kind != "fileChange"))
             {
                 items.Add(CreateConversationCard(
                     itemId: $"{turnId}:diff",
@@ -4014,8 +4071,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                     documentName: $"turn-{ShortenIdentifier(turnId)}-diff.patch",
                     documentMeta: $"{diff.Split('\n').Length} lines",
                     documentText: $"# Aggregated Diff\n\n{diff}",
-                    accentBrush: ShellBrushes.Amber,
-                    surfaceBrush: ShellBrushes.AmberSoft));
+                    accentTone: ShellTones.Amber,
+                    surfaceTone: ShellTones.AmberSoft));
             }
 
             if (!string.IsNullOrWhiteSpace(turn.Error?.Message))
@@ -4037,8 +4094,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                     documentName: $"turn-{ShortenIdentifier(turnId)}-error.md",
                     documentMeta: "Turn failure",
                     documentText: $"# Turn Error\n\n{turn.Error.Message}\n\n{turn.Error.AdditionalDetails}",
-                    accentBrush: ShellBrushes.Red,
-                    surfaceBrush: ShellBrushes.RedSoft));
+                    accentTone: ShellTones.Red,
+                    surfaceTone: ShellTones.RedSoft));
             }
         }
 
@@ -4061,14 +4118,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 documentName: $"thread-{ShortenIdentifier(thread.Id)}-summary.md",
                 documentMeta: "No turns",
                 documentText: BuildThreadDocument(thread),
-                accentBrush: ShellBrushes.Green,
-                surfaceBrush: ShellBrushes.Paper));
+                accentTone: ShellTones.Green,
+                surfaceTone: ShellTones.Paper));
         }
 
         return items;
     }
 
-    private ConversationItemViewModel CreateConversationItem(ThreadTurn turn, ThreadItem item, string turnId, int index)
+    private ConversationItemViewModel CreateConversationItem(ThreadDetail thread, ThreadTurn turn, ThreadItem item, string turnId, int index, ThreadDetailProjectionContext context)
     {
         var itemId = item.Id ?? $"{turnId}:{item.Type ?? "item"}:{index}";
         var meta = $"{turnId} · {item.Status ?? turn.Status ?? "available"}";
@@ -4092,8 +4149,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 $"turn-{ShortenIdentifier(turnId)}-user.md",
                 "User input",
                 $"# User Message\n\n{ExtractUserMessageText(item) ?? "User message"}",
-                ShellBrushes.Blue,
-                ShellBrushes.BlueSoft),
+                ShellTones.Blue,
+                ShellTones.BlueSoft),
             "agentMessage" => CreateConversationCard(
                 itemId,
                 turnId,
@@ -4111,8 +4168,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 $"turn-{ShortenIdentifier(turnId)}-assistant.md",
                 item.Phase ?? "Assistant reply",
                 $"# Assistant Message\n\n{item.Text ?? TryGetString(item.AdditionalPropertiesJson ?? new Dictionary<string, JsonElement>(), "text") ?? "Assistant message"}",
-                ShellBrushes.Green,
-                ShellBrushes.Paper),
+                ShellTones.Green,
+                ShellTones.Paper),
             "commandExecution" => CreateConversationCard(
                 itemId,
                 turnId,
@@ -4130,28 +4187,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 $"turn-{ShortenIdentifier(turnId)}-command.log",
                 BuildCommandDocumentMeta(item),
                 BuildCommandDocument(turn, item),
-                ShellBrushes.Blue,
-                ShellBrushes.CommandSurface),
-            "fileChange" => CreateConversationCard(
-                itemId,
-                turnId,
-                item.Type ?? "fileChange",
-                "system",
-                "File change",
-                BuildFileChangeBody(item),
-                meta,
-                item.Changes is { Count: > 0 } changes ? $"{changes.Count} file(s)" : item.Status ?? string.Empty,
-                "Changed files",
-                BuildChangedFilesPreview(item),
-                "Diff preview",
-                PreviewMultiline(BuildAggregatedDiff(turnId, item), 8, 420),
-                "diff",
-                $"turn-{ShortenIdentifier(turnId)}-diff.patch",
-                item.Changes is { Count: > 0 } diffChanges ? $"{diffChanges.Count} file(s) changed" : "Diff",
-                BuildFileChangeDocument(turn, item, turnId),
-                ShellBrushes.Amber,
-                ShellBrushes.AmberSoft,
-                BuildFileDiffEntries(turnId, item)),
+                ShellTones.Blue,
+                ShellTones.CommandSurface),
+            "fileChange" => CreateFileChangeConversationCard(thread, turn, item, itemId, turnId, meta, context),
             "mcpToolCall" => CreateConversationCard(
                 itemId,
                 turnId,
@@ -4169,8 +4207,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 $"turn-{ShortenIdentifier(turnId)}-tool.json",
                 $"{item.Server ?? "connector"}/{item.Tool ?? "tool"}",
                 BuildToolDocument(turn, item),
-                ShellBrushes.Amber,
-                ShellBrushes.ToolSurface),
+                ShellTones.Amber,
+                ShellTones.ToolSurface),
             "dynamicToolCall" => CreateConversationCard(
                 itemId,
                 turnId,
@@ -4188,8 +4226,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 $"turn-{ShortenIdentifier(turnId)}-dynamic-tool.json",
                 item.Tool ?? "dynamic tool",
                 BuildToolDocument(turn, item),
-                ShellBrushes.Blue,
-                ShellBrushes.ToolSurface),
+                ShellTones.Blue,
+                ShellTones.ToolSurface),
             "plan" => CreateConversationCard(
                 itemId,
                 turnId,
@@ -4206,9 +4244,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 "markdown",
                 $"turn-{ShortenIdentifier(turnId)}-plan.md",
                 "Plan",
-                BuildPlanDocument(turnId, item),
-                ShellBrushes.Amber,
-                ShellBrushes.AmberSoft),
+                BuildPlanDocument(turnId, item, context),
+                ShellTones.Amber,
+                ShellTones.AmberSoft),
             "reasoning" => CreateConversationCard(
                 itemId,
                 turnId,
@@ -4226,8 +4264,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 $"turn-{ShortenIdentifier(turnId)}-reasoning.md",
                 "Reasoning",
                 BuildReasoningDocument(turnId, item),
-                ShellBrushes.Amber,
-                ShellBrushes.PaperMuted),
+                ShellTones.Amber,
+                ShellTones.PaperMuted),
             "enteredReviewMode" or "exitedReviewMode" => CreateConversationCard(
                 itemId,
                 turnId,
@@ -4245,8 +4283,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 $"turn-{ShortenIdentifier(turnId)}-review.md",
                 "Review",
                 $"# Review Mode\n\n{item.Text ?? DescribeThreadItem(item)}",
-                ShellBrushes.Green,
-                ShellBrushes.Paper),
+                ShellTones.Green,
+                ShellTones.Paper),
             _ => CreateConversationCard(
                 itemId,
                 turnId,
@@ -4269,6 +4307,51 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         };
     }
 
+    private ConversationItemViewModel CreateConversationItem(ThreadTurn turn, ThreadItem item, string turnId, int index)
+    {
+        var thread = _currentThreadDetail ?? new ThreadDetail
+        {
+            Cwd = string.IsNullOrWhiteSpace(WorkingDirectory) ? Environment.CurrentDirectory : WorkingDirectory
+        };
+
+        return CreateConversationItem(thread, turn, item, turnId, index, CaptureThreadDetailProjectionContext());
+    }
+
+    private ConversationItemViewModel CreateFileChangeConversationCard(
+        ThreadDetail thread,
+        ThreadTurn turn,
+        ThreadItem item,
+        string itemId,
+        string turnId,
+        string meta,
+        ThreadDetailProjectionContext context)
+    {
+        var localGitDiff = BuildLocalGitDiff(item, thread.Cwd, context.FallbackWorkingDirectory);
+        var aggregatedDiff = BuildAggregatedDiff(turnId, item, context, localGitDiff);
+        var diffEntries = BuildFileDiffEntries(turnId, item, context, localGitDiff, aggregatedDiff);
+
+        return CreateConversationCard(
+            itemId,
+            turnId,
+            item.Type ?? "fileChange",
+            "system",
+            "File change",
+            BuildFileChangeBody(item),
+            meta,
+            item.Changes is { Count: > 0 } changes ? $"{changes.Count} file(s)" : item.Status ?? string.Empty,
+            "Changed files",
+            BuildChangedFilesPreview(item),
+            "Diff preview",
+            PreviewMultiline(aggregatedDiff, 8, 420),
+            "diff",
+            $"turn-{ShortenIdentifier(turnId)}-diff.patch",
+            item.Changes is { Count: > 0 } diffChanges ? $"{diffChanges.Count} file(s) changed" : "Diff",
+            BuildFileChangeDocument(turn, item, aggregatedDiff),
+            ShellTones.Amber,
+            ShellTones.AmberSoft,
+            diffEntries);
+    }
+
     private static ConversationItemViewModel CreateConversationCard(
         string itemId,
         string turnId,
@@ -4286,8 +4369,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         string documentName,
         string documentMeta,
         string documentText,
-        IBrush accentBrush,
-        IBrush surfaceBrush,
+        ShellTone accentTone,
+        ShellTone surfaceTone,
         IReadOnlyList<DiffFileEntryViewModel>? fileDiffs = null)
     {
         return new ConversationItemViewModel(
@@ -4307,9 +4390,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             documentName,
             documentMeta,
             documentText,
-            accentBrush,
-            surfaceBrush,
-            ShellBrushes.TextPrimary,
+            accentTone,
+            surfaceTone,
+            ShellTones.TextPrimary,
             fileDiffs);
     }
 
@@ -4380,19 +4463,22 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         return string.Join('\n', item.Changes.Take(4).Select(static change => $"{change.Kind ?? "change"} {change.Path ?? "file"}"));
     }
 
-    private IReadOnlyList<DiffFileEntryViewModel> BuildFileDiffEntries(string turnId, ThreadItem item)
+    private IReadOnlyList<DiffFileEntryViewModel> BuildFileDiffEntries(
+        string turnId,
+        ThreadItem item,
+        ThreadDetailProjectionContext context,
+        string localGitDiff,
+        string fallbackAggregatedDiff)
     {
         if (item.Changes is not { Count: > 0 } changes)
         {
             return Array.Empty<DiffFileEntryViewModel>();
         }
 
-        var localGitDiff = BuildLocalGitDiff(item);
-        var fallbackAggregatedDiff = BuildAggregatedDiff(turnId, item, localGitDiff);
-        var itemDiff = !string.IsNullOrWhiteSpace(item.Id) && _latestFileChangeDiffs.TryGetValue(item.Id, out var latestItemDiff)
+        var itemDiff = !string.IsNullOrWhiteSpace(item.Id) && context.FileChangeDiffs.TryGetValue(item.Id, out var latestItemDiff)
             ? latestItemDiff
             : string.Empty;
-        var turnDiff = _latestTurnDiffs.TryGetValue(turnId, out var latestTurnDiff)
+        var turnDiff = context.TurnDiffs.TryGetValue(turnId, out var latestTurnDiff)
             ? latestTurnDiff
             : string.Empty;
         var entries = new List<DiffFileEntryViewModel>(changes.Count);
@@ -4445,16 +4531,20 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         return $"+{additions}  -{deletions}";
     }
 
-    private string BuildAggregatedDiff(string turnId, ThreadItem item, string? localGitDiff = null)
+    private static string BuildAggregatedDiff(
+        string turnId,
+        ThreadItem item,
+        ThreadDetailProjectionContext context,
+        string? localGitDiff = null)
     {
         if (!string.IsNullOrWhiteSpace(item.Id) &&
-            _latestFileChangeDiffs.TryGetValue(item.Id, out var itemDiff) &&
+            context.FileChangeDiffs.TryGetValue(item.Id, out var itemDiff) &&
             LooksLikeUnifiedDiff(itemDiff))
         {
             return itemDiff;
         }
 
-        if (_latestTurnDiffs.TryGetValue(turnId, out var diff) && LooksLikeUnifiedDiff(diff))
+        if (context.TurnDiffs.TryGetValue(turnId, out var diff) && LooksLikeUnifiedDiff(diff))
         {
             return diff;
         }
@@ -4468,11 +4558,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         if (!string.IsNullOrWhiteSpace(itemDiffs))
         {
             return itemDiffs;
-        }
-
-        if (string.IsNullOrWhiteSpace(localGitDiff))
-        {
-            localGitDiff = BuildLocalGitDiff(item);
         }
 
         if (LooksLikeUnifiedDiff(localGitDiff))
@@ -4634,9 +4719,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             || diff.StartsWith("--- ", StringComparison.Ordinal);
     }
 
-    private string BuildLocalGitDiff(ThreadItem item)
+    private string BuildLocalGitDiff(ThreadItem item, string? threadWorkingDirectory, string fallbackWorkingDirectory)
     {
-        var workingDirectory = ResolveDiffWorkingDirectory(item);
+        var workingDirectory = ResolveDiffWorkingDirectory(item, threadWorkingDirectory, fallbackWorkingDirectory);
         if (string.IsNullOrWhiteSpace(workingDirectory))
         {
             return string.Empty;
@@ -4645,26 +4730,23 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         return _gitDiffService.BuildLocalGitDiff(item, workingDirectory);
     }
 
-    private string ResolveDiffWorkingDirectory(ThreadItem item)
+    private static string ResolveDiffWorkingDirectory(ThreadItem item, string? threadWorkingDirectory, string fallbackWorkingDirectory)
     {
         if (!string.IsNullOrWhiteSpace(item.Cwd))
         {
             return item.Cwd;
         }
 
-        if (!string.IsNullOrWhiteSpace(_currentThreadDetail?.Cwd))
+        if (!string.IsNullOrWhiteSpace(threadWorkingDirectory))
         {
-            return _currentThreadDetail.Cwd;
+            return threadWorkingDirectory;
         }
 
-        return string.IsNullOrWhiteSpace(WorkingDirectory)
-            ? Environment.CurrentDirectory
-            : WorkingDirectory;
+        return fallbackWorkingDirectory;
     }
 
-    private string BuildFileChangeDocument(ThreadTurn turn, ThreadItem item, string turnId)
+    private static string BuildFileChangeDocument(ThreadTurn turn, ThreadItem item, string diff)
     {
-        var diff = BuildAggregatedDiff(turnId, item);
         var lines = new List<string>
         {
             "# File Changes",
@@ -4783,9 +4865,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         ]);
     }
 
-    private string BuildPlanDocument(string turnId, ThreadItem item)
+    private static string BuildPlanDocument(string turnId, ThreadItem item, ThreadDetailProjectionContext context)
     {
-        if (_latestTurnPlans.TryGetValue(turnId, out var planNotification) && planNotification.Plan is { Count: > 0 })
+        if (context.TurnPlans.TryGetValue(turnId, out var planNotification) && planNotification.Plan is { Count: > 0 })
         {
             var lines = new List<string>
             {

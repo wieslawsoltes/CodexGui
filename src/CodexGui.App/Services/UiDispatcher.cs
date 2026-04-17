@@ -1,6 +1,10 @@
-using Avalonia.Threading;
-
 namespace CodexGui.App.Services;
+
+internal enum UiDispatchPriority
+{
+    Normal,
+    Background
+}
 
 internal interface IUiDispatcher
 {
@@ -8,36 +12,38 @@ internal interface IUiDispatcher
 
     void Post(Action action);
 
-    void Post(Action action, DispatcherPriority priority);
+    void Post(Action action, UiDispatchPriority priority);
 
     Task InvokeAsync(Action action);
 
-    Task InvokeAsync(Action action, DispatcherPriority priority);
+    Task InvokeAsync(Action action, UiDispatchPriority priority);
 
     Task<T> InvokeAsync<T>(Func<T> action);
 
-    Task<T> InvokeAsync<T>(Func<T> action, DispatcherPriority priority);
+    Task<T> InvokeAsync<T>(Func<T> action, UiDispatchPriority priority);
 }
 
-internal sealed class AvaloniaUiDispatcher : IUiDispatcher
+internal sealed class ImmediateUiDispatcher : IUiDispatcher
 {
-    public bool CheckAccess() => Dispatcher.UIThread.CheckAccess();
+    public bool CheckAccess() => true;
 
-    public void Post(Action action)
-        => Dispatcher.UIThread.Post(action, DispatcherPriority.Normal);
+    public void Post(Action action) => action();
 
-    public void Post(Action action, DispatcherPriority priority)
-        => Dispatcher.UIThread.Post(action, priority);
+    public void Post(Action action, UiDispatchPriority priority) => action();
 
     public Task InvokeAsync(Action action)
-        => Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Normal).GetTask();
+    {
+        action();
+        return Task.CompletedTask;
+    }
 
-    public Task InvokeAsync(Action action, DispatcherPriority priority)
-        => Dispatcher.UIThread.InvokeAsync(action, priority).GetTask();
+    public Task InvokeAsync(Action action, UiDispatchPriority priority)
+    {
+        action();
+        return Task.CompletedTask;
+    }
 
-    public Task<T> InvokeAsync<T>(Func<T> action)
-        => Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Normal).GetTask();
+    public Task<T> InvokeAsync<T>(Func<T> action) => Task.FromResult(action());
 
-    public Task<T> InvokeAsync<T>(Func<T> action, DispatcherPriority priority)
-        => Dispatcher.UIThread.InvokeAsync(action, priority).GetTask();
+    public Task<T> InvokeAsync<T>(Func<T> action, UiDispatchPriority priority) => Task.FromResult(action());
 }

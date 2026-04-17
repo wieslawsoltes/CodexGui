@@ -1,0 +1,307 @@
+<UserControl x:Class="CodexGui.App.Uno.Controls.ShellConversationWorkspaceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:CodexGui.App.Uno.Converters"
+             xmlns:vm="using:CodexGui.App.ViewModels"
+             xmlns:md="using:CodexGui.Markdown.Controls">
+  <UserControl.Resources>
+    <conv:ShellToneToBrushConverter x:Key="ToneToBrushConverter" />
+    <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+  </UserControl.Resources>
+
+  <Border Background="{StaticResource PanelBrush}"
+          Padding="10,0,10,0">
+    <Grid RowDefinitions="*,Auto,Auto"
+          RowSpacing="8">
+      <ListView x:Name="ConversationList"
+                Grid.Row="0"
+                Background="Transparent"
+                BorderThickness="0"
+                ItemContainerStyle="{StaticResource FlatListViewItemStyle}"
+                ItemsSource="{Binding ConversationItems}"
+                SelectedItem="{Binding SelectedConversationItem, Mode=TwoWay}">
+      <ListView.ItemTemplate>
+          <DataTemplate x:DataType="vm:ConversationItemViewModel">
+            <Border Style="{StaticResource ConversationBubbleBorderStyle}">
+              <Grid ColumnDefinitions="82,*"
+                    ColumnSpacing="12">
+                <StackPanel Spacing="2">
+                  <TextBlock Text="{x:Bind Role, Mode=OneWay}"
+                             Style="{StaticResource SectionLabelTextStyle}" />
+                  <TextBlock Text="{x:Bind Meta, Mode=OneWay}"
+                             Style="{StaticResource MutedTextStyle}"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Spacing="6">
+                  <Grid ColumnDefinitions="*,Auto"
+                        ColumnSpacing="8">
+                    <TextBlock Text="{x:Bind Title, Mode=OneWay}"
+                               Style="{StaticResource ThreadTitleTextStyle}"
+                               Foreground="{x:Bind ForegroundTone, Mode=OneWay, Converter={StaticResource ToneToBrushConverter}}" />
+                    <Border Grid.Column="1"
+                            Style="{StaticResource StatusChipBorderStyle}"
+                            x:Load="{x:Bind HasBadge, Mode=OneWay}">
+                      <TextBlock Text="{x:Bind Badge, Mode=OneWay}"
+                                 Style="{StaticResource ChipValueTextStyle}" />
+                    </Border>
+                  </Grid>
+
+                  <md:MarkdownThreadMessageView Markdown="{x:Bind Body, Mode=OneWay}"
+                                               x:Phase="1"
+                                               FontSize="12"
+                                               Foreground="{x:Bind ForegroundTone, Mode=OneWay, Converter={StaticResource ToneToBrushConverter}}"
+                                               TextWrapping="Wrap" />
+
+                  <StackPanel Spacing="4"
+                              x:Load="{x:Bind HasCodePreview, Mode=OneWay}"
+                              x:Phase="2">
+                    <TextBlock Text="{x:Bind CodePreviewLabel, Mode=OneWay}"
+                               Style="{StaticResource SectionLabelTextStyle}" />
+                    <Border Style="{StaticResource PreviewCodeBlockBorderStyle}">
+                      <TextBlock Text="{x:Bind CodePreview, Mode=OneWay}"
+                                 Style="{StaticResource CodeBlockTextStyle}" />
+                    </Border>
+                  </StackPanel>
+
+                  <StackPanel Spacing="4"
+                              x:Load="{x:Bind HasOutputPreview, Mode=OneWay}"
+                              x:Phase="2">
+                    <TextBlock Text="{x:Bind OutputPreviewLabel, Mode=OneWay}"
+                               Style="{StaticResource SectionLabelTextStyle}" />
+                    <Border Style="{StaticResource PreviewCodeBlockBorderStyle}">
+                      <TextBlock Text="{x:Bind OutputPreview, Mode=OneWay}"
+                                 Style="{StaticResource CodeBlockTextStyle}" />
+                    </Border>
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ListView.ItemTemplate>
+      </ListView>
+
+      <Border Grid.Row="1"
+              Style="{StaticResource ApprovalPanelBorderStyle}"
+              Visibility="{Binding HasPendingRequests, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,Auto"
+                ColumnSpacing="10">
+            <TextBlock Text="Pending approvals"
+                       Style="{StaticResource PanelTitleTextStyle}" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding PendingRequestCountLabel}"
+                       Style="{StaticResource BodyTextStyle}" />
+          </Grid>
+
+          <ItemsControl ItemsSource="{Binding PendingRequests}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:PendingInteractionViewModel">
+                <Border Style="{StaticResource ApprovalCardBorderStyle}">
+                  <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="10">
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding Title}"
+                                   Style="{StaticResource ThreadTitleTextStyle}" />
+                        <TextBlock Text="{Binding Meta}"
+                                   Style="{StaticResource MutedTextStyle}" />
+                      </StackPanel>
+                      <Border Grid.Column="1"
+                              Style="{StaticResource StatusChipBorderStyle}"
+                              Visibility="{Binding HasBadge, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="{Binding Badge}"
+                                   Style="{StaticResource ChipValueTextStyle}" />
+                      </Border>
+                    </Grid>
+
+                    <TextBlock Text="{Binding Detail}"
+                               TextWrapping="Wrap" />
+
+                    <Border Style="{StaticResource PreviewCodeBlockBorderStyle}"
+                            Visibility="{Binding HasCommandPreview, Converter={StaticResource BooleanToVisibilityConverter}}">
+                      <TextBlock Text="{Binding CommandPreview}"
+                                 Style="{StaticResource CodeBlockTextStyle}" />
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding Questions}"
+                                  Visibility="{Binding HasQuestions, Converter={StaticResource BooleanToVisibilityConverter}}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PendingInteractionQuestionViewModel">
+                          <Border Style="{StaticResource ApprovalQuestionBorderStyle}">
+                            <StackPanel Spacing="8">
+                              <TextBlock Text="{Binding Header}"
+                                         Style="{StaticResource SectionLabelTextStyle}" />
+                              <TextBlock Text="{Binding Question}"
+                                         TextWrapping="Wrap" />
+                              <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                            VerticalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding Options}"
+                                              Visibility="{Binding HasOptions, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                  <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                      <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                  </ItemsControl.ItemsPanel>
+                                  <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PendingInteractionOptionViewModel">
+                                      <Button Style="{StaticResource SecondaryButtonStyle}"
+                                              Margin="0,0,6,0"
+                                              Content="{Binding Label}"
+                                              Command="{Binding SelectCommand}" />
+                                    </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                              </ScrollViewer>
+                              <TextBox Style="{StaticResource CommandFieldTextBoxStyle}"
+                                       Text="{Binding AnswerText, Mode=TwoWay}"
+                                       PlaceholderText="Type your answer" />
+                            </StackPanel>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <StackPanel Spacing="8"
+                                Visibility="{Binding HasToolResponseBox, Converter={StaticResource BooleanToVisibilityConverter}}">
+                      <TextBlock Text="Return tool output"
+                                 Style="{StaticResource SectionLabelTextStyle}" />
+                      <TextBox Style="{StaticResource ComposerInputTextBoxStyle}"
+                               Text="{Binding ResponseText, Mode=TwoWay}"
+                               PlaceholderText="{Binding ResponsePlaceholder}"
+                               AcceptsReturn="True" />
+                    </StackPanel>
+
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled">
+                      <StackPanel Orientation="Horizontal"
+                                  Spacing="6">
+                        <Button Style="{StaticResource PrimaryButtonStyle}"
+                                Content="Accept"
+                                Command="{Binding AcceptCommand}"
+                                Visibility="{Binding HasApprovalButtons, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="Accept For Session"
+                                Command="{Binding AcceptForSessionCommand}"
+                                Visibility="{Binding ShowAcceptForSession, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="Remember Rule"
+                                Command="{Binding ApplyExecPolicyCommand}"
+                                Visibility="{Binding HasExecPolicyDecision, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="Remember Host"
+                                Command="{Binding ApplyNetworkPolicyCommand}"
+                                Visibility="{Binding HasNetworkPolicyDecision, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="Decline"
+                                Command="{Binding DeclineCommand}"
+                                Visibility="{Binding HasApprovalButtons, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource WarningButtonStyle}"
+                                Content="Cancel Turn"
+                                Command="{Binding CancelCommand}"
+                                Visibility="{Binding HasApprovalButtons, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}"
+                                Content="Submit Answers"
+                                Command="{Binding SubmitAnswersCommand}"
+                                Visibility="{Binding HasQuestions, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}"
+                                Content="{Binding SubmitSuccessButtonLabel}"
+                                Command="{Binding SubmitSuccessResultCommand}"
+                                Visibility="{Binding HasToolResponseBox, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="{Binding SubmitFailureButtonLabel}"
+                                Command="{Binding SubmitFailureResultCommand}"
+                                Visibility="{Binding HasToolFailureResult, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                      </StackPanel>
+                    </ScrollViewer>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="2"
+              Style="{StaticResource ComposerSurfaceBorderStyle}">
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              RowSpacing="10">
+          <StackPanel Spacing="6">
+            <TextBlock Text="Ask for follow-up changes"
+                       Style="{StaticResource MutedTextStyle}" />
+            <TextBlock Text="{Binding ComposerHint}"
+                       Style="{StaticResource BodyTextStyle}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="{Binding ConnectionDetail}"
+                       Style="{StaticResource MutedTextStyle}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+
+          <TextBox Grid.Row="1"
+                   Style="{StaticResource ComposerInputTextBoxStyle}"
+                   Text="{Binding DraftPrompt, Mode=TwoWay}"
+                   AcceptsReturn="True"
+                   PlaceholderText="Ask for follow-up changes..." />
+
+          <Grid Grid.Row="2"
+                ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto"
+                ColumnSpacing="8">
+            <ComboBox Style="{StaticResource PickerFieldComboBoxStyle}"
+                      ItemsSource="{Binding AvailableModels}"
+                      SelectedItem="{Binding SelectedModel, Mode=TwoWay}" />
+            <ComboBox Grid.Column="1"
+                      Style="{StaticResource PickerFieldComboBoxStyle}"
+                      ItemsSource="{Binding AvailableApprovalPolicies}"
+                      SelectedItem="{Binding SelectedApprovalPolicy, Mode=TwoWay}" />
+
+            <StackPanel Grid.Column="3"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Spacing="6">
+              <Border Style="{StaticResource StatusChipBorderStyle}"
+                      BorderBrush="{Binding ConnectionTone, Converter={StaticResource ToneToBrushConverter}}">
+                <TextBlock Text="{Binding ConnectionState}"
+                           Style="{StaticResource ChipValueTextStyle}" />
+              </Border>
+              <Border Style="{StaticResource StatusChipBorderStyle}">
+                <TextBlock Text="{Binding WorkingDirectoryName}"
+                           Style="{StaticResource ChipValueTextStyle}" />
+              </Border>
+            </StackPanel>
+
+            <Button Grid.Column="4"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Command="{Binding InterruptTurnCommand}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="6">
+                <SymbolIcon Symbol="Cancel" />
+                <TextBlock Text="Interrupt" />
+              </StackPanel>
+            </Button>
+
+            <Button Grid.Column="5"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Command="{Binding SteerTurnCommand}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="6">
+                <SymbolIcon Symbol="Forward" />
+                <TextBlock Text="Steer" />
+              </StackPanel>
+            </Button>
+
+            <Button Grid.Column="6"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding SendTurnCommand}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="6">
+                <SymbolIcon Symbol="Send" />
+                <TextBlock Text="Send" />
+              </StackPanel>
+            </Button>
+          </Grid>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

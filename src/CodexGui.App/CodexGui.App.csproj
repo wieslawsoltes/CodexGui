@@ -1,46 +1,54 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Uno.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0-desktop</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+    <UnoFeatures>SkiaRenderer;</UnoFeatures>
+    <ApplicationTitle>CodexGui</ApplicationTitle>
+    <ApplicationId>com.wieslawsoltes.codexgui</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationPublisher>CodexGui</ApplicationPublisher>
+    <Description>Uno Platform desktop client for the Codex app-server protocol.</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
-
-  <PropertyGroup>
-    <IsPackable>true</IsPackable>
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>codexgui</ToolCommandName>
-    <PackageId>CodexGui.App</PackageId>
-    <Title>CodexGui Desktop Tool</Title>
-    <Description>Native Avalonia desktop client for the Codex app-server protocol, packaged as a .NET tool.</Description>
-    <PackageTags>$(PackageTags);tool;desktop;avalonia;app</PackageTags>
-  </PropertyGroup>
-
 
   <ItemGroup>
-    <Folder Include="Models\" />
-    <AvaloniaResource Include="Assets\**" />
+    <Compile Include="App.xaml.cs" />
+    <Compile Include="Platforms/Desktop/Program.cs" />
+    <Compile Include="Services/**/*.cs" />
+    <Compile Include="ViewModels/**/*.cs" />
+    <Compile Include="Uno/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" />
-    <PackageReference Include="Avalonia.Desktop" />
-    <PackageReference Include="Avalonia.Themes.Fluent" />
-    <PackageReference Include="Avalonia.Fonts.Inter" />
-    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Include="Avalonia.Diagnostics">
-      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
-      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
-    </PackageReference>
+    <Page Include="App.xaml" />
+    <Page Include="Uno/**/*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="app.manifest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
-    <PackageReference Include="FluentIcons.Avalonia" />
-    <PackageReference Include="ProDataGrid" />
+    <PackageReference Include="Pretext.Uno" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CodexGui.Markdown\CodexGui.Markdown.csproj" />
     <ProjectReference Include="..\CodexGui.AppServer\CodexGui.AppServer.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown\CodexGui.Markdown.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.Alerts\CodexGui.Markdown.Plugin.Alerts.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.CustomContainers\CodexGui.Markdown.Plugin.CustomContainers.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.DefinitionLists\CodexGui.Markdown.Plugin.DefinitionLists.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.Figures\CodexGui.Markdown.Plugin.Figures.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.Footers\CodexGui.Markdown.Plugin.Footers.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.Math\CodexGui.Markdown.Plugin.Math.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.Mermaid\CodexGui.Markdown.Plugin.Mermaid.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.SyntaxHighlighting\CodexGui.Markdown.Plugin.SyntaxHighlighting.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Plugin.TextMate\CodexGui.Markdown.Plugin.TextMate.csproj" />
   </ItemGroup>
 </Project>

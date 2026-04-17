@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CodexGui.AppServer\CodexGui.AppServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\CodexGui.App\Services\AppJson.cs" Link="App\Services\AppJson.cs" />
+    <Compile Include="..\..\src\CodexGui.App\Services\CodexSessionServices.cs" Link="App\Services\CodexSessionServices.cs" />
+    <Compile Include="..\..\src\CodexGui.App\Services\GitDiffService.cs" Link="App\Services\GitDiffService.cs" />
+    <Compile Include="..\..\src\CodexGui.App\Services\PendingInteractionFactory.cs" Link="App\Services\PendingInteractionFactory.cs" />
+    <Compile Include="..\..\src\CodexGui.App\Services\UiDispatcher.cs" Link="App\Services\UiDispatcher.cs" />
+    <Compile Include="..\..\src\CodexGui.App\ViewModels\ViewModelBase.cs" Link="App\ViewModels\ViewModelBase.cs" />
+    <Compile Include="..\..\src\CodexGui.App\ViewModels\ShellModels.cs" Link="App\ViewModels\ShellModels.cs" />
+    <Compile Include="..\..\src\CodexGui.App\ViewModels\MainWindowViewModel.cs" Link="App\ViewModels\MainWindowViewModel.cs" />
+  </ItemGroup>
+</Project>

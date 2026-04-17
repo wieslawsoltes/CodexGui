@@ -1,0 +1,59 @@
+<UserControl x:Class="CodexGui.App.Uno.Controls.ShellTopBarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CodexGui.App.ViewModels"
+             xmlns:conv="using:CodexGui.App.Uno.Converters">
+  <UserControl.Resources>
+    <conv:ShellToneToBrushConverter x:Key="ToneToBrushConverter" />
+  </UserControl.Resources>
+
+  <Border Background="{StaticResource PanelBrush}"
+          BorderBrush="{StaticResource BorderBrush}"
+          BorderThickness="0,0,0,1"
+          Padding="12,8">
+    <Border Style="{StaticResource TopBarOverviewCardBorderStyle}">
+      <StackPanel Spacing="8">
+        <StackPanel Spacing="2"
+                    MinWidth="280"
+                    MaxWidth="560">
+          <TextBlock Text="Current workspace"
+                     Style="{StaticResource SectionLabelTextStyle}" />
+          <TextBlock Text="{Binding CurrentWorkspaceTitle}"
+                     Style="{StaticResource TopBarHeadlineTextStyle}"
+                     TextWrapping="Wrap" />
+          <TextBlock Text="{Binding CurrentWorkspaceSubtitle}"
+                     Style="{StaticResource BodyTextStyle}"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                      HorizontalScrollMode="Enabled"
+                      VerticalScrollBarVisibility="Disabled"
+                      VerticalScrollMode="Disabled">
+          <ItemsControl ItemsSource="{Binding StatusChips}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:StatusChipViewModel">
+                <Border Style="{StaticResource StatusChipBorderStyle}"
+                        Background="{x:Bind SurfaceTone, Converter={StaticResource ToneToBrushConverter}}"
+                        BorderBrush="{x:Bind AccentTone, Converter={StaticResource ToneToBrushConverter}}">
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="6">
+                    <TextBlock Text="{x:Bind Label}"
+                               Style="{StaticResource ChipLabelTextStyle}" />
+                    <TextBlock Text="{x:Bind Value}"
+                               Style="{StaticResource ChipValueTextStyle}" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
+  </Border>
+</UserControl>

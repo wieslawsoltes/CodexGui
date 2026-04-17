@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/CodexGui.App/CodexGui.App.csproj" />
     <Project Path="src/CodexGui.AppServer/CodexGui.AppServer.csproj" />
+    <Project Path="src/CodexGui.Markdown.Core/CodexGui.Markdown.Core.csproj" />
     <Project Path="src/CodexGui.Markdown/CodexGui.Markdown.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.Alerts/CodexGui.Markdown.Plugin.Alerts.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.CustomContainers/CodexGui.Markdown.Plugin.CustomContainers.csproj" />
@@ -13,5 +14,10 @@
     <Project Path="src/CodexGui.Markdown.Plugin.SyntaxHighlighting/CodexGui.Markdown.Plugin.SyntaxHighlighting.csproj" />
     <Project Path="src/CodexGui.Markdown.Plugin.TextMate/CodexGui.Markdown.Plugin.TextMate.csproj" />
     <Project Path="src/CodexGui.Markdown.Sample/CodexGui.Markdown.Sample.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodexGui.App.Tests/CodexGui.App.Tests.csproj" />
+    <Project Path="tests/CodexGui.Markdown.Core.Tests/CodexGui.Markdown.Core.Tests.csproj" />
+    <Project Path="tests/CodexGui.Markdown.Plugin.TextMate.Tests/CodexGui.Markdown.Plugin.TextMate.Tests.csproj" />
   </Folder>
 </Solution>

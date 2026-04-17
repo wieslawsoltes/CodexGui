@@ -1,0 +1,251 @@
+<UserControl x:Class="CodexGui.App.Uno.Controls.ShellNavRailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:CodexGui.App.Uno.Converters">
+  <UserControl.Resources>
+    <conv:ShellToneToBrushConverter x:Key="ToneToBrushConverter" />
+    <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+  </UserControl.Resources>
+
+  <Border Background="{StaticResource RailBrush}"
+          BorderBrush="{StaticResource BorderBrush}"
+          BorderThickness="0,0,1,0"
+          Padding="8,0">
+    <Grid RowDefinitions="Auto,*,Auto"
+          RowSpacing="10">
+      <Border Width="32"
+              Height="32"
+              Margin="0,12,0,0"
+              CornerRadius="8"
+              Background="{StaticResource PrimaryButtonBrush}"
+              HorizontalAlignment="Center">
+        <TextBlock Text="C"
+                   Style="{StaticResource BrandGlyphTextStyle}" />
+      </Border>
+
+      <StackPanel Grid.Row="1"
+                  HorizontalAlignment="Center"
+                  Spacing="6"
+                  Margin="0,8,0,0">
+        <Button Style="{StaticResource RailButtonStyle}">
+          <Button.Flyout>
+            <Flyout Placement="Right">
+              <Border Style="{StaticResource RailFlyoutCardBorderStyle}"
+                      Width="332">
+                <StackPanel Spacing="10">
+                  <Grid ColumnDefinitions="*,Auto"
+                        ColumnSpacing="8">
+                    <TextBlock Text="Thread actions"
+                               Style="{StaticResource PanelTitleTextStyle}" />
+                    <Border Grid.Column="1"
+                            Style="{StaticResource TopBarInlineBadgeBorderStyle}"
+                            VerticalAlignment="Center">
+                      <TextBlock Text="{Binding ThreadCountLabel}"
+                                 Style="{StaticResource TopBarInlineBadgeTextStyle}" />
+                    </Border>
+                  </Grid>
+
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="6">
+                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding NewThreadCommand}">
+                      <TextBlock Text="New thread" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding StartReviewCommand}">
+                      <TextBlock Text="Review" />
+                    </Button>
+                    <ToggleButton Style="{StaticResource PanelToggleStyle}"
+                                  IsChecked="{Binding AutoScrollMessages, Mode=TwoWay}"
+                                  Content="Auto-scroll" />
+                  </StackPanel>
+
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="6">
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding ForkThreadCommand}">
+                      <TextBlock Text="Fork" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding ArchiveThreadCommand}">
+                      <TextBlock Text="Archive" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding UnarchiveThreadCommand}">
+                      <TextBlock Text="Unarchive" />
+                    </Button>
+                  </StackPanel>
+
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="6">
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding RenameThreadCommand}">
+                      <TextBlock Text="Rename" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding CompactThreadCommand}">
+                      <TextBlock Text="Compact" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding RollbackThreadCommand}">
+                      <TextBlock Text="Rollback" />
+                    </Button>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </Flyout>
+          </Button.Flyout>
+          <SymbolIcon Symbol="Add" />
+        </Button>
+
+        <Button Style="{StaticResource RailButtonStyle}">
+          <Button.Flyout>
+            <Flyout Placement="Right">
+              <Border Style="{StaticResource RailFlyoutCardBorderStyle}"
+                      Width="300">
+                <StackPanel Spacing="10">
+                  <TextBlock Text="Workspace"
+                             Style="{StaticResource PanelTitleTextStyle}" />
+
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="6">
+                    <ToggleButton Style="{StaticResource PanelToggleStyle}"
+                                  Content="Rail"
+                                  IsChecked="{Binding ShowNavigationRail, Mode=TwoWay}" />
+                    <ToggleButton Style="{StaticResource PanelToggleStyle}"
+                                  Content="Sidebar"
+                                  IsChecked="{Binding ShowWorkspacePanel, Mode=TwoWay}" />
+                  </StackPanel>
+
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="6">
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding ShowThreadsCommand}">
+                      <TextBlock Text="Threads" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding ShowAppsCommand}">
+                      <TextBlock Text="Apps" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding ShowSettingsCommand}">
+                      <TextBlock Text="Settings" />
+                    </Button>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </Flyout>
+          </Button.Flyout>
+          <SymbolIcon Symbol="Bullets" />
+        </Button>
+
+        <Button Style="{StaticResource RailButtonStyle}"
+                Command="{Binding ShowAppsCommand}">
+          <SymbolIcon Symbol="AllApps" />
+        </Button>
+
+        <Button Style="{StaticResource RailButtonStyle}"
+                Command="{Binding ShowSettingsCommand}">
+          <SymbolIcon Symbol="Setting" />
+        </Button>
+      </StackPanel>
+
+      <StackPanel Grid.Row="2"
+                  HorizontalAlignment="Center"
+                  Spacing="8"
+                  Margin="0,0,0,12">
+        <Button Style="{StaticResource RailButtonStyle}">
+          <Button.Flyout>
+            <Flyout Placement="Right">
+              <Border Style="{StaticResource RailFlyoutCardBorderStyle}"
+                      Width="360">
+                <StackPanel Spacing="10">
+                  <Grid ColumnDefinitions="*,Auto"
+                        ColumnSpacing="8">
+                    <TextBlock Text="Session"
+                               Style="{StaticResource PanelTitleTextStyle}" />
+                    <Border Grid.Column="1"
+                            Style="{StaticResource TopBarInlineBadgeBorderStyle}"
+                            VerticalAlignment="Center">
+                      <TextBlock Text="{Binding ConnectionState}"
+                                 Style="{StaticResource TopBarInlineBadgeTextStyle}" />
+                    </Border>
+                  </Grid>
+
+                  <TextBlock Text="{Binding ConnectionDetail}"
+                             Style="{StaticResource MutedTextStyle}"
+                             TextWrapping="Wrap" />
+
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Executable or endpoint"
+                               Style="{StaticResource SectionLabelTextStyle}" />
+                    <TextBox Style="{StaticResource CommandFieldTextBoxStyle}"
+                             Text="{Binding CommandPath, Mode=TwoWay}" />
+                  </StackPanel>
+
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Arguments (local process)"
+                               Style="{StaticResource SectionLabelTextStyle}" />
+                    <TextBox Style="{StaticResource CommandFieldTextBoxStyle}"
+                             Text="{Binding CommandArguments, Mode=TwoWay}" />
+                  </StackPanel>
+
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Working directory"
+                               Style="{StaticResource SectionLabelTextStyle}" />
+                    <TextBox Style="{StaticResource CommandFieldTextBoxStyle}"
+                             Text="{Binding WorkingDirectory, Mode=TwoWay}" />
+                  </StackPanel>
+
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="6">
+                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding ConnectCommand}">
+                      <TextBlock Text="Connect" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding DisconnectCommand}">
+                      <TextBlock Text="Disconnect" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding RefreshCommand}">
+                      <TextBlock Text="Refresh" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding ReloadMcpServersCommand}">
+                      <TextBlock Text="Reload MCP" />
+                    </Button>
+                  </StackPanel>
+
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="6">
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding LoginCommand}">
+                      <TextBlock Text="Login" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding CancelLoginCommand}"
+                            Visibility="{Binding HasActiveLogin, Converter={StaticResource BooleanToVisibilityConverter}}">
+                      <TextBlock Text="Cancel login" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding LogoutCommand}">
+                      <TextBlock Text="Logout" />
+                    </Button>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </Flyout>
+          </Button.Flyout>
+          <FontIcon Glyph="&#xE895;"
+                    Foreground="{Binding ConnectionTone, Converter={StaticResource ToneToBrushConverter}}" />
+        </Button>
+
+        <Button Style="{StaticResource RailButtonStyle}"
+                Command="{Binding RefreshCommand}">
+          <SymbolIcon Symbol="Refresh" />
+        </Button>
+      </StackPanel>
+    </Grid>
+  </Border>
+</UserControl>

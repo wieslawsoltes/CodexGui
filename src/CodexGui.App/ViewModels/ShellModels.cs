@@ -1,14 +1,67 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
-using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CodexGui.AppServer.Models;
 
 namespace CodexGui.App.ViewModels;
 
-public sealed record StatusChipViewModel(string Label, string Value, IBrush AccentBrush, IBrush SurfaceBrush);
+public enum ShellTone
+{
+    TextPrimary,
+    TextSecondary,
+    TextMuted,
+    Green,
+    GreenSoft,
+    Blue,
+    BlueSoft,
+    Amber,
+    AmberSoft,
+    Red,
+    RedSoft,
+    Neutral,
+    NeutralSoft,
+    Paper,
+    PaperMuted,
+    EditorSurface,
+    EditorHeaderSurface,
+    LineNumber,
+    DiffAddSurface,
+    DiffRemoveSurface,
+    DiffMetaSurface,
+    CommandSurface,
+    ToolSurface
+}
+
+public static class ShellTones
+{
+    public const ShellTone TextPrimary = ShellTone.TextPrimary;
+    public const ShellTone TextSecondary = ShellTone.TextSecondary;
+    public const ShellTone TextMuted = ShellTone.TextMuted;
+    public const ShellTone Green = ShellTone.Green;
+    public const ShellTone GreenSoft = ShellTone.GreenSoft;
+    public const ShellTone Blue = ShellTone.Blue;
+    public const ShellTone BlueSoft = ShellTone.BlueSoft;
+    public const ShellTone Amber = ShellTone.Amber;
+    public const ShellTone AmberSoft = ShellTone.AmberSoft;
+    public const ShellTone Red = ShellTone.Red;
+    public const ShellTone RedSoft = ShellTone.RedSoft;
+    public const ShellTone Neutral = ShellTone.Neutral;
+    public const ShellTone NeutralSoft = ShellTone.NeutralSoft;
+    public const ShellTone Paper = ShellTone.Paper;
+    public const ShellTone PaperMuted = ShellTone.PaperMuted;
+    public const ShellTone EditorSurface = ShellTone.EditorSurface;
+    public const ShellTone EditorHeaderSurface = ShellTone.EditorHeaderSurface;
+    public const ShellTone LineNumber = ShellTone.LineNumber;
+    public const ShellTone DiffAddSurface = ShellTone.DiffAddSurface;
+    public const ShellTone DiffRemoveSurface = ShellTone.DiffRemoveSurface;
+    public const ShellTone DiffMetaSurface = ShellTone.DiffMetaSurface;
+    public const ShellTone CommandSurface = ShellTone.CommandSurface;
+    public const ShellTone ToolSurface = ShellTone.ToolSurface;
+}
+
+public sealed record StatusChipViewModel(string Label, string Value, ShellTone AccentTone, ShellTone SurfaceTone);
 
 public sealed record ThreadListEntryViewModel(
     string Id,
@@ -17,8 +70,8 @@ public sealed record ThreadListEntryViewModel(
     string TimeLabel,
     string Meta,
     string Badge,
-    IBrush AccentBrush,
-    IBrush SurfaceBrush,
+    ShellTone AccentTone,
+    ShellTone SurfaceTone,
     string StatusType);
 
 public sealed record DiffFileEntryViewModel(
@@ -44,9 +97,9 @@ public sealed record ConversationItemViewModel(
     string DocumentName,
     string DocumentMeta,
     string DocumentText,
-    IBrush AccentBrush,
-    IBrush SurfaceBrush,
-    IBrush ForegroundBrush,
+    ShellTone AccentTone,
+    ShellTone SurfaceTone,
+    ShellTone ForegroundTone,
     IReadOnlyList<DiffFileEntryViewModel>? FileDiffs = null)
 {
     public bool HasBadge => !string.IsNullOrWhiteSpace(Badge);
@@ -119,8 +172,8 @@ public sealed partial class PendingInteractionViewModel : ObservableObject
         IEnumerable<PendingInteractionQuestionViewModel>? questions,
         IReadOnlyList<string>? proposedExecpolicyAmendment,
         NetworkPolicyAmendment? proposedNetworkPolicyAmendment,
-        IBrush accentBrush,
-        IBrush surfaceBrush,
+        ShellTone accentTone,
+        ShellTone surfaceTone,
         Action<AppServerServerRequestCompletion> completeAction)
     {
         RequestKey = requestKey;
@@ -134,8 +187,8 @@ public sealed partial class PendingInteractionViewModel : ObservableObject
         ShowAcceptForSession = showAcceptForSession;
         ProposedExecpolicyAmendment = proposedExecpolicyAmendment;
         ProposedNetworkPolicyAmendment = proposedNetworkPolicyAmendment;
-        AccentBrush = accentBrush;
-        SurfaceBrush = surfaceBrush;
+        AccentTone = accentTone;
+        SurfaceTone = surfaceTone;
         _completeAction = completeAction;
 
         Questions = new ObservableCollection<PendingInteractionQuestionViewModel>(questions ?? Array.Empty<PendingInteractionQuestionViewModel>());
@@ -175,9 +228,9 @@ public sealed partial class PendingInteractionViewModel : ObservableObject
 
     public ObservableCollection<PendingInteractionQuestionViewModel> Questions { get; }
 
-    public IBrush AccentBrush { get; }
+    public ShellTone AccentTone { get; }
 
-    public IBrush SurfaceBrush { get; }
+    public ShellTone SurfaceTone { get; }
 
     public IRelayCommand AcceptCommand { get; }
 
@@ -377,33 +430,4 @@ public sealed partial class PendingInteractionViewModel : ObservableObject
             .Where(static answer => !string.IsNullOrWhiteSpace(answer))
             .ToArray();
     }
-}
-
-public static class ShellBrushes
-{
-    public static readonly IBrush TextPrimary = Create("#171717");
-    public static readonly IBrush TextSecondary = Create("#454545");
-    public static readonly IBrush TextMuted = Create("#707070");
-    public static readonly IBrush Green = Create("#1F7A3D");
-    public static readonly IBrush GreenSoft = Create("#EAF6EE");
-    public static readonly IBrush Blue = Create("#0A56C2");
-    public static readonly IBrush BlueSoft = Create("#EAF1FE");
-    public static readonly IBrush Amber = Create("#B06A10");
-    public static readonly IBrush AmberSoft = Create("#FFF4E8");
-    public static readonly IBrush Red = Create("#B42318");
-    public static readonly IBrush RedSoft = Create("#FDEDEC");
-    public static readonly IBrush Neutral = Create("#636363");
-    public static readonly IBrush NeutralSoft = Create("#EFEFEF");
-    public static readonly IBrush Paper = Create("#FFFFFF");
-    public static readonly IBrush PaperMuted = Create("#F8F8F8");
-    public static readonly IBrush EditorSurface = Create("#F6F6F6");
-    public static readonly IBrush EditorHeaderSurface = Create("#EFEFEF");
-    public static readonly IBrush LineNumber = Create("#848484");
-    public static readonly IBrush DiffAddSurface = Create("#EAF6EE");
-    public static readonly IBrush DiffRemoveSurface = Create("#FDEDEC");
-    public static readonly IBrush DiffMetaSurface = Create("#F3F3F3");
-    public static readonly IBrush CommandSurface = Create("#EEF3FD");
-    public static readonly IBrush ToolSurface = Create("#FFF4E8");
-
-    private static IBrush Create(string color) => new SolidColorBrush(Color.Parse(color));
 }

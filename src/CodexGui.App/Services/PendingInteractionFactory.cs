@@ -52,8 +52,8 @@ internal sealed class PendingInteractionFactory : IPendingInteractionFactory
             questions: null,
             proposedExecpolicyAmendment: parameters?.ProposedExecpolicyAmendment?.ToArray(),
             proposedNetworkPolicyAmendment: parameters?.ProposedNetworkPolicyAmendments?.FirstOrDefault(),
-            accentBrush: ShellBrushes.Amber,
-            surfaceBrush: ShellBrushes.Paper,
+            accentTone: ShellTones.Amber,
+            surfaceTone: ShellTones.Paper,
             completeAction: completeAction);
     }
 
@@ -80,8 +80,8 @@ internal sealed class PendingInteractionFactory : IPendingInteractionFactory
             questions: null,
             proposedExecpolicyAmendment: null,
             proposedNetworkPolicyAmendment: null,
-            accentBrush: ShellBrushes.Amber,
-            surfaceBrush: ShellBrushes.Paper,
+            accentTone: ShellTones.Amber,
+            surfaceTone: ShellTones.Paper,
             completeAction: completeAction);
     }
 
@@ -111,8 +111,8 @@ internal sealed class PendingInteractionFactory : IPendingInteractionFactory
             questions: questions,
             proposedExecpolicyAmendment: null,
             proposedNetworkPolicyAmendment: null,
-            accentBrush: ShellBrushes.Blue,
-            surfaceBrush: ShellBrushes.Paper,
+            accentTone: ShellTones.Blue,
+            surfaceTone: ShellTones.Paper,
             completeAction: completeAction);
     }
 
@@ -136,8 +136,8 @@ internal sealed class PendingInteractionFactory : IPendingInteractionFactory
             questions: null,
             proposedExecpolicyAmendment: null,
             proposedNetworkPolicyAmendment: null,
-            accentBrush: ShellBrushes.Blue,
-            surfaceBrush: ShellBrushes.Paper,
+            accentTone: ShellTones.Blue,
+            surfaceTone: ShellTones.Paper,
             completeAction: completeAction);
     }
 
@@ -159,8 +159,8 @@ internal sealed class PendingInteractionFactory : IPendingInteractionFactory
             questions: null,
             proposedExecpolicyAmendment: null,
             proposedNetworkPolicyAmendment: null,
-            accentBrush: ShellBrushes.Blue,
-            surfaceBrush: ShellBrushes.Paper,
+            accentTone: ShellTones.Blue,
+            surfaceTone: ShellTones.Paper,
             completeAction: completeAction);
     }
 }
