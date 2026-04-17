@@ -16,5 +16,6 @@
   <ItemGroup>
     <PackageReference Include="Markdig" />
     <PackageReference Include="Pretext" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
   </ItemGroup>
 </Project>
