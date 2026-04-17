@@ -1,27 +1,35 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Uno.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0-desktop</TargetFrameworks>
+    <OutputType>Library</OutputType>
+    <GenerateLibraryLayout>true</GenerateLibraryLayout>
+    <UnoSingleProject>true</UnoSingleProject>
+    <UnoFeatures>SkiaRenderer;</UnoFeatures>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <PropertyGroup>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <IsPackable>true</IsPackable>
     <PackageId>CodexGui.Markdown.Plugin.TextMate</PackageId>
     <Title>CodexGui Markdown TextMate Plugin</Title>
-    <Description>TextMate-backed highlighting and editor integration support for CodexGui.Markdown.</Description>
-    <PackageTags>$(PackageTags);avalonia;markdown;plugin;textmate;highlighting;editor</PackageTags>
+    <Description>TextMate-backed highlighting and Uno editor integration for CodexGui.Markdown.</Description>
+    <PackageTags>$(PackageTags);uno;markdown;plugin;textmate;highlighting;editor</PackageTags>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Include="Uno/**/*.cs" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" />
-    <PackageReference Include="AvaloniaEdit.TextMate" />
+    <Page Include="Uno/**/*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Pretext.Uno" />
+    <PackageReference Include="TextMateSharp" />
     <PackageReference Include="TextMateSharp.Grammars" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CodexGui.Markdown\CodexGui.Markdown.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Core\CodexGui.Markdown.Core.csproj" />
   </ItemGroup>
 </Project>

@@ -1,14 +1,17 @@
 using System.Globalization;
 using System.Linq;
+#if !MERMAID_PARSER_ONLY
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
 using CodexGui.Markdown.Services;
+#endif
 
 namespace CodexGui.Markdown.Plugin.Mermaid;
 
+#if !MERMAID_PARSER_ONLY
 internal static class MermaidDiagramViewFactory
 {
     private static readonly FontFamily MonospaceFamily = new("Cascadia Mono, Consolas, Courier New");
@@ -245,6 +248,7 @@ internal static class MermaidDiagramViewFactory
 }
 
 internal sealed record MermaidRenderedDiagram(Control Control, MarkdownVisualHitTestHandler? HitTestHandler);
+#endif
 
 internal enum MermaidDiagramKind
 {
@@ -562,8 +566,8 @@ internal sealed record MermaidQuadrantPointDefinition(
     double Y,
     double Radius,
     double StrokeWidth,
-    Color? FillColor,
-    Color? StrokeColor);
+    string? FillColor,
+    string? StrokeColor);
 
 internal sealed class MermaidMindmapDiagramDefinition : MermaidDiagramDefinition
 {
@@ -1845,8 +1849,8 @@ internal static class MermaidDiagramParser
 
         var radius = 6d;
         var strokeWidth = 1.5d;
-        Color? fillColor = null;
-        Color? strokeColor = null;
+        string? fillColor = null;
+        string? strokeColor = null;
         var styleText = line[(bracketEnd + 1)..].Trim();
         if (styleText.Length > 0)
         {
@@ -2281,9 +2285,9 @@ internal static class MermaidDiagramParser
         return double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out dimension);
     }
 
-    private static bool TryParseHexColor(string value, out Color color)
+    private static bool TryParseHexColor(string value, out string color)
     {
-        color = default;
+        color = string.Empty;
         var normalized = value.Trim();
         if (!normalized.StartsWith('#') || (normalized.Length != 7 && normalized.Length != 9))
         {
@@ -2295,9 +2299,7 @@ internal static class MermaidDiagramParser
             return false;
         }
 
-        color = normalized.Length == 7
-            ? Color.FromRgb((byte)(parsed >> 16), (byte)(parsed >> 8), (byte)parsed)
-            : Color.FromArgb((byte)(parsed >> 24), (byte)(parsed >> 16), (byte)(parsed >> 8), (byte)parsed);
+        color = normalized.ToUpperInvariant();
         return true;
     }
 
@@ -2839,6 +2841,7 @@ internal static class MermaidDiagramParser
     private readonly record struct MermaidMindmapNodeContext(int Indent, MermaidMindmapNodeBuilder Node);
 }
 
+#if !MERMAID_PARSER_ONLY
 internal sealed class MermaidDiagramControl : Control
 {
     private static readonly IBrush NodeFill = new SolidColorBrush(Color.Parse("#F8FAFF"));
@@ -4790,3 +4793,4 @@ internal sealed class MermaidDiagramControl : Control
 
     private readonly record struct MermaidEdgeRef(string FromId, string ToId);
 }
+#endif

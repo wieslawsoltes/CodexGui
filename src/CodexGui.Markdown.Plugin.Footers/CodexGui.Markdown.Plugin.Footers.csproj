@@ -3,23 +3,19 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <PropertyGroup>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <IsPackable>true</IsPackable>
     <PackageId>CodexGui.Markdown.Plugin.Footers</PackageId>
     <Title>CodexGui Markdown Footers Plugin</Title>
-    <Description>Footer block parsing, rendering, and editing support for CodexGui.Markdown.</Description>
-    <PackageTags>$(PackageTags);avalonia;markdown;plugin;footers</PackageTags>
+    <Description>Footer parser registration for the Uno CodexGui markdown stack.</Description>
+    <PackageTags>$(PackageTags);uno;markdown;plugin;footers</PackageTags>
   </PropertyGroup>
 
-
   <ItemGroup>
-    <PackageReference Include="Avalonia" />
-    <PackageReference Include="Markdig" />
+    <Compile Include="Uno/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CodexGui.Markdown\CodexGui.Markdown.csproj" />
+    <ProjectReference Include="..\CodexGui.Markdown.Core\CodexGui.Markdown.Core.csproj" />
   </ItemGroup>
 </Project>
