@@ -1,17 +1,21 @@
-using System;
-using Avalonia;
+using Uno.UI.Hosting;
 
 namespace CodexGui.Markdown.Sample;
 
-internal sealed class Program
+internal static class Program
 {
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
+    public static void Main(string[] args)
+    {
+        Uno.App.InitializeLogging();
 
-    public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .WithInterFont()
-            .LogToTrace();
+        UnoPlatformHostBuilder.Create()
+            .App(() => new Uno.App())
+            .UseX11()
+            .UseLinuxFrameBuffer()
+            .UseMacOS()
+            .UseWin32()
+            .Build()
+            .Run();
+    }
 }
