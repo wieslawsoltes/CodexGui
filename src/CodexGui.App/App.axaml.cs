@@ -1,8 +1,5 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
-using Avalonia.Data.Core.Plugins;
-using System.Linq;
 using Avalonia.Markup.Xaml;
 using CodexGui.App.Services;
 using CodexGui.AppServer.Client;
@@ -25,7 +22,6 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            DisableAvaloniaDataAnnotationValidation();
             _sessionService = new CodexSessionService(new CodexAppServerClient());
             _mainWindowViewModel = new MainWindowViewModel(
                 _sessionService,
@@ -53,17 +49,6 @@ public partial class App : Application
         if (_sessionService is not null)
         {
             await _sessionService.DisposeAsync();
-        }
-    }
-
-    private void DisableAvaloniaDataAnnotationValidation()
-    {
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
-
-        foreach (var plugin in dataValidationPluginsToRemove)
-        {
-            BindingPlugins.DataValidators.Remove(plugin);
         }
     }
 }

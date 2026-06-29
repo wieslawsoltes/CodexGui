@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Product>CodexGui</Product>
     <VersionPrefix>0.1.0</VersionPrefix>
-    <VersionSuffix>alpha.1</VersionSuffix>
+    <VersionSuffix></VersionSuffix>
     <Authors>Wieslaw Soltes</Authors>
     <Company>Wieslaw Soltes</Company>
     <Copyright>Copyright © Wieslaw Soltes 2026</Copyright>
