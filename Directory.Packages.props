@@ -15,7 +15,7 @@
     <PackageVersion Include="FluentIcons.Avalonia" Version="2.1.331" />
     <PackageVersion Include="Markdig" Version="1.1.1" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
-    <PackageVersion Include="NSwag.MSBuild" Version="14.2.0" />
+    <PackageVersion Include="NSwag.MSBuild" Version="14.7.1" />
     <PackageVersion Include="ProDataGrid" Version="12.0.4" />
     <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.4" />
   </ItemGroup>

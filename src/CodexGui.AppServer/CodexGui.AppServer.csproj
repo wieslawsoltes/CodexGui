@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <NSwagCli>$(NSwagExe_Net90)</NSwagCli>
+    <NSwagCli>$(NSwagExe_Net100)</NSwagCli>
     <NSwagCli Condition="'$(NSwagCli)' == ''">$(NSwagExe)</NSwagCli>
   </PropertyGroup>
 
@@ -28,7 +28,7 @@
           BeforeTargets="CoreCompile"
           Inputs="$(MSBuildProjectDirectory)/OpenApi/appserver-models.openapi.json;$(MSBuildProjectDirectory)/nswag.models.json"
           Outputs="$(MSBuildProjectDirectory)/Models/AppServerProtocolDtos.Generated.cs">
-    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="&quot;$(NSwagCli)&quot; run nswag.models.json" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="$(NSwagCli) run nswag.models.json" />
   </Target>
 
 </Project>
