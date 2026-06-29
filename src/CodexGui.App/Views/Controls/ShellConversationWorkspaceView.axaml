@@ -142,7 +142,7 @@
                                                             </ItemsControl>
                                                             <TextBox Classes="commandField"
                                                                      Text="{Binding AnswerText}"
-                                                                     Watermark="Type your answer" />
+                                                                     PlaceholderText="Type your answer" />
                                                         </StackPanel>
                                                     </Border>
                                                 </DataTemplate>
@@ -154,7 +154,7 @@
                                             <TextBlock Text="Return tool output" Classes="sectionLabel" />
                                             <TextBox Classes="composerInput"
                                                      Text="{Binding ResponseText}"
-                                                     Watermark="{Binding ResponsePlaceholder}"
+                                                     PlaceholderText="{Binding ResponsePlaceholder}"
                                                      AcceptsReturn="True" />
                                         </StackPanel>
 
@@ -222,7 +222,7 @@
                              Classes="composerInput"
                              Text="{Binding DraftPrompt}"
                              AcceptsReturn="True"
-                             Watermark="Ask for follow-up changes..." />
+                             PlaceholderText="Ask for follow-up changes..." />
 
                     <Grid Grid.Row="2"
                           ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto"
