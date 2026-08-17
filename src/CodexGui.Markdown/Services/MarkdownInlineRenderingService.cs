@@ -50,7 +50,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
     private static readonly IBrush CodeCommentForeground = new SolidColorBrush(Color.Parse("#6E7781"));
     private static readonly IBrush CodeNumberForeground = new SolidColorBrush(Color.Parse("#0550AE"));
     private static readonly IBrush CodePropertyForeground = new SolidColorBrush(Color.Parse("#953800"));
-    private static readonly IBrush CodeTagForeground = new SolidColorBrush(Color.Parse("#116329"));
+    private static readonly IBrush CodeTagForeground = new SolidColorBrush(Color.Parse("#1A7F37"));
     private static readonly IBrush CodeAttributeForeground = new SolidColorBrush(Color.Parse("#9A6700"));
     private static readonly IBrush CodePunctuationForeground = new SolidColorBrush(Color.Parse("#57606A"));
     private static readonly IBrush CodeHeaderBackground = new SolidColorBrush(Color.Parse("#EAEEF2"));
@@ -501,6 +501,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         {
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
+        var tableSelectionGroup = new object();
         var tableHitTargets = new List<TableCellHitTarget>();
 
         for (var columnIndex = 0; columnIndex < columnCount; columnIndex++)
@@ -531,6 +532,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                     rowIndex,
                     columnIndex,
                     columnCount,
+                    tableSelectionGroup,
                     state);
 
                 Grid.SetRow(cellBorder, rowIndex);
@@ -545,7 +547,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             }
         }
 
-        var tableBorder = new Border
+        var tableBorder = new MarkdownRichBlockBorder
         {
             Background = SurfaceBackground,
             BorderBrush = SurfaceBorderBrush,
@@ -602,9 +604,10 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
         int rowIndex,
         int columnIndex,
         int columnCount,
+        object tableSelectionGroup,
         RenderState state)
     {
-        return new Border
+        return new MarkdownRichBlockBorder
         {
             Background = isHeader
                 ? TableHeaderBackground
@@ -614,13 +617,27 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             BorderBrush = SurfaceBorderBrush,
             BorderThickness = new Thickness(0, 0, columnIndex == columnCount - 1 ? 0 : 1, 1),
             Padding = new Thickness(12, 8),
-            Child = CreateTableCellContent(cellData, alignment, isHeader, state)
+            Child = CreateTableCellContent(
+                cellData,
+                alignment,
+                isHeader,
+                tableSelectionGroup,
+                rowIndex,
+                columnIndex,
+                state)
         };
     }
 
-    private static Control CreateTableCellContent(TableCellData cellData, TableColumnAlign? alignment, bool isHeader, RenderState state)
+    private static Control CreateTableCellContent(
+        TableCellData cellData,
+        TableColumnAlign? alignment,
+        bool isHeader,
+        object tableSelectionGroup,
+        int rowIndex,
+        int columnIndex,
+        RenderState state)
     {
-        var textBlock = new SelectableTextBlock
+        var textBlock = new TextBlock
         {
             FontSize = state.Options.FontSize,
             FontFamily = state.Options.FontFamily,
@@ -641,7 +658,13 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             RenderTableCellContent(cellData.Cell, inlines, state);
         }
 
+        MarkdownSelectionNormalizer.IsolateTextSegments(inlines, state.Options, state.ParseResult);
         textBlock.Inlines = inlines;
+        MarkdownDocumentSelection.RegisterTableCellSegments(
+            textBlock,
+            tableSelectionGroup,
+            rowIndex,
+            columnIndex);
         return textBlock;
     }
 
@@ -1528,7 +1551,17 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
                 linkText = url;
             }
 
-            AppendHyperlinkInline(output, linkText ?? string.Empty, state);
+            var hyperlinkSpan = CreateHyperlinkSpan(state);
+            RenderInlineContainer(link, hyperlinkSpan.Inlines, state, skipLeadingTaskInline: false);
+            if (hyperlinkSpan.Inlines.Count == 0)
+            {
+                hyperlinkSpan.Inlines.Add(AttachElementInfo(
+                    new Run(linkText ?? string.Empty),
+                    state.SourceObject,
+                    MarkdownRenderedElementKind.Text));
+            }
+
+            output.Add(hyperlinkSpan);
             return;
         }
 
@@ -1611,14 +1644,19 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
 
     private static void AppendHyperlinkInline(InlineCollection output, string text, RenderState state)
     {
+        var hyperlinkSpan = CreateHyperlinkSpan(state);
+        hyperlinkSpan.Inlines.Add(AttachElementInfo(new Run(text), state.SourceObject, MarkdownRenderedElementKind.Text));
+        output.Add(hyperlinkSpan);
+    }
+
+    private static Span CreateHyperlinkSpan(RenderState state)
+    {
         var hyperlinkSpan = new Span
         {
             Foreground = LinkForeground,
             TextDecorations = Avalonia.Media.TextDecorations.Underline
         };
-        AttachElementInfo(hyperlinkSpan, state.SourceObject, MarkdownRenderedElementKind.Text);
-        hyperlinkSpan.Inlines.Add(AttachElementInfo(new Run(text), state.SourceObject, MarkdownRenderedElementKind.Text));
-        output.Add(hyperlinkSpan);
+        return AttachElementInfo(hyperlinkSpan, state.SourceObject, MarkdownRenderedElementKind.Text);
     }
 
     private static string ExtractInlineText(ContainerInline container)
@@ -1855,17 +1893,20 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             ToolTip.SetTip(control, toolTip);
         }
 
+        MarkdownRenderedElementMetadata.SetIsTextAdornment(control, true);
         output.Add(CreateInlineControlContainer(control, state.SourceObject, MarkdownRenderedElementKind.InlineControl, baselineAlignment));
     }
 
     private static Control CreateRichBlockHost(Control content, RenderState state)
     {
-        return new MarkdownRichBlockHost(ResolveRichBlockWidth(state))
+        var host = new MarkdownRichBlockHost(ResolveRichBlockWidth(state))
         {
             Margin = new Thickness(state.ListDepth * 24d, 4, 0, 4),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Child = state.QuoteDepth > 0 ? CreateQuoteDecoratedBlock(content, state.QuoteDepth) : content
         };
+        MarkdownRenderedElementMetadata.SetStretchesToDocumentWidth(host, true);
+        return host;
     }
 
     private static void AddRichBlockControl(RenderState state, Control content, MarkdownVisualHitTestHandler? hitTestHandler = null)
@@ -1967,7 +2008,7 @@ public sealed class MarkdownInlineRenderingService : IMarkdownInlineRenderingSer
             }
         };
 
-        return new Border
+        return new MarkdownRichBlockBorder
         {
             Background = SurfaceBackground,
             BorderBrush = SurfaceBorderBrush,

@@ -67,7 +67,6 @@ internal static class MarkdownCustomContainerRendering
 
         return new MarkdownTextBlock
         {
-            Markdown = markdown,
             BaseUri = renderContext.BaseUri,
             RenderController = NestedRenderController,
             EditingService = NestedEditingService,
@@ -76,8 +75,10 @@ internal static class MarkdownCustomContainerRendering
             FontSize = renderContext.FontSize,
             FontFamily = renderContext.FontFamily,
             Foreground = renderContext.Foreground,
+            ThemePalette = renderContext.ThemePalette,
             TextWrapping = renderContext.TextWrapping,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Markdown = markdown
         };
     }
 

@@ -18,6 +18,13 @@ public sealed class MarkdownRenderController(IMarkdownParsingService parsingServ
         }
 
         var parseResult = _parsingService.Parse(request.Markdown);
-        return _inlineRenderingService.Render(parseResult, request.Context);
+        var result = _inlineRenderingService.Render(parseResult, request.Context);
+        var palette = request.Context.ThemePalette ?? MarkdownThemePalette.Resolve(request.Context.Foreground);
+        MarkdownThemeNormalizer.Apply(result.Inlines, palette);
+        MarkdownRichBlockBorderNormalizer.PreserveRoundedBorders(result.Inlines);
+        MarkdownTaskListNormalizer.Normalize(result.Inlines, parseResult, request.Context);
+        MarkdownBlockQuoteNormalizer.Normalize(result.Inlines, parseResult, request.Context);
+        MarkdownSelectionNormalizer.IsolateTextSegments(result.Inlines, request.Context, parseResult);
+        return result;
     }
 }

@@ -11,7 +11,7 @@ internal static class MarkdownBuiltInSyntaxHighlighting
     private static readonly IBrush CodeCommentForeground = new SolidColorBrush(Color.Parse("#6E7781"));
     private static readonly IBrush CodeNumberForeground = new SolidColorBrush(Color.Parse("#0550AE"));
     private static readonly IBrush CodePropertyForeground = new SolidColorBrush(Color.Parse("#953800"));
-    private static readonly IBrush CodeTagForeground = new SolidColorBrush(Color.Parse("#116329"));
+    private static readonly IBrush CodeTagForeground = new SolidColorBrush(Color.Parse("#1A7F37"));
     private static readonly IBrush CodeAttributeForeground = new SolidColorBrush(Color.Parse("#9A6700"));
     private static readonly IBrush CodePunctuationForeground = new SolidColorBrush(Color.Parse("#57606A"));
     private static readonly HashSet<string> CommonCodeKeywords = new(StringComparer.OrdinalIgnoreCase)

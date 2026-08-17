@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" />
+    <PackageReference Include="Mermaider" />
+    <PackageReference Include="Svg.Controls.Skia.Avalonia" />
   </ItemGroup>
 
   <ItemGroup>

@@ -101,7 +101,8 @@ public static class MarkdownCalloutRendering
 
         return normalizedKind switch
         {
-            "caution" or "warning" => new MarkdownCalloutPresentation(title, WarningAccentBrush, WarningBackground),
+            "caution" => new MarkdownCalloutPresentation(title, DangerAccentBrush, DangerBackground),
+            "warning" => new MarkdownCalloutPresentation(title, WarningAccentBrush, WarningBackground),
             "danger" or "error" => new MarkdownCalloutPresentation(title, DangerAccentBrush, DangerBackground),
             "important" => new MarkdownCalloutPresentation(title, ImportantAccentBrush, ImportantBackground),
             "success" or "tip" => new MarkdownCalloutPresentation(title, SuccessAccentBrush, SuccessBackground),

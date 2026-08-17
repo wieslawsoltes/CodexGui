@@ -77,7 +77,6 @@ internal static class MarkdownFooterRendering
 
         return new MarkdownTextBlock
         {
-            Markdown = markdown,
             BaseUri = renderContext.BaseUri,
             RenderController = NestedRenderController,
             EditingService = NestedEditingService,
@@ -86,8 +85,10 @@ internal static class MarkdownFooterRendering
             FontSize = Math.Max(renderContext.FontSize - 1, 11),
             FontFamily = renderContext.FontFamily,
             Foreground = HeaderForeground,
+            ThemePalette = renderContext.ThemePalette,
             TextWrapping = renderContext.TextWrapping,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Markdown = markdown
         };
     }
 

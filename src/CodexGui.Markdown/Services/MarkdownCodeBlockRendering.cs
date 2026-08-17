@@ -104,7 +104,7 @@ public static class MarkdownCodeBlockRendering
         Grid.SetRow(bodyBorder, 1);
         layout.Children.Add(bodyBorder);
 
-        var root = new Border
+        var root = new MarkdownRichBlockBorder
         {
             Background = SurfaceBackground,
             BorderBrush = SurfaceBorderBrush,

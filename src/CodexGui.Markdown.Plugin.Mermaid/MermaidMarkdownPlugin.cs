@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using CodexGui.Markdown.Services;
 using Markdig;
 using Markdig.Extensions.CustomContainers;
@@ -10,18 +11,25 @@ using Markdig.Syntax;
 
 namespace CodexGui.Markdown.Plugin.Mermaid;
 
+/// <summary>
+/// Adds Mermaid fenced blocks, custom containers, templates, editing, and native SVG rendering.
+/// </summary>
 public sealed class MermaidMarkdownPlugin : IMarkdownPlugin
 {
+    /// <summary>Gets the stable editor identifier used for Mermaid diagram blocks.</summary>
     public const string MermaidEditorId = "mermaid-diagram-editor";
+    private readonly MermaiderSvgRenderer _renderer = new();
 
+    /// <summary>Registers Mermaid parsing, rendering, templates, and editing services.</summary>
+    /// <param name="registry">The Markdown plugin registry to extend.</param>
     public void Register(MarkdownPluginRegistry registry)
     {
         ArgumentNullException.ThrowIfNull(registry);
         registry
             .AddParserPlugin(new MermaidParserPlugin())
-            .AddBlockRenderingPlugin(new MermaidDiagramBlockRenderingPlugin())
+            .AddBlockRenderingPlugin(new MermaidDiagramBlockRenderingPlugin(_renderer))
             .AddBlockTemplateProvider(new MermaidBlockTemplateProvider())
-            .AddEditorPlugin(new MermaidDiagramEditorPlugin());
+            .AddEditorPlugin(new MermaidDiagramEditorPlugin(_renderer));
     }
 }
 
@@ -238,8 +246,10 @@ internal static class MermaidSyntax
     }
 }
 
-internal sealed class MermaidDiagramBlockRenderingPlugin : IMarkdownBlockRenderingPlugin
+internal sealed class MermaidDiagramBlockRenderingPlugin(MermaiderSvgRenderer renderer) : IMarkdownBlockRenderingPlugin
 {
+    private readonly MermaiderSvgRenderer _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
+
     public int Order => -100;
 
     public bool CanRender(Block block)
@@ -255,14 +265,24 @@ internal sealed class MermaidDiagramBlockRenderingPlugin : IMarkdownBlockRenderi
         }
 
         var diagramSource = MermaidSyntax.NormalizeCode(mermaidBlock.Lines.ToString());
-        var renderedDiagram = MermaidDiagramViewFactory.Create(diagramSource, context.AvailableWidth, context.RenderContext);
-        context.AddBlockControl(renderedDiagram.Control, renderedDiagram.HitTestHandler);
+        var palette = context.RenderContext.ThemePalette ??
+                      MarkdownThemePalette.Resolve(context.RenderContext.Foreground);
+        var control = new MermaidDiagramControl(
+            _renderer,
+            diagramSource,
+            palette,
+            context.RenderContext.FontFamily.Name,
+            context.RenderContext.FontSize);
+        context.TrackResource(control);
+        context.AddBlockControl(control);
         return true;
     }
 }
 
-internal sealed class MermaidDiagramEditorPlugin : IMarkdownEditorPlugin
+internal sealed class MermaidDiagramEditorPlugin(MermaiderSvgRenderer renderer) : IMarkdownEditorPlugin
 {
+    private readonly MermaiderSvgRenderer _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
+
     public string EditorId => MermaidMarkdownPlugin.MermaidEditorId;
 
     public MarkdownEditorFeature Feature => MarkdownEditorFeature.Mermaid;
@@ -316,17 +336,14 @@ internal sealed class MermaidDiagramEditorPlugin : IMarkdownEditorPlugin
             Padding = new Thickness(8)
         };
 
-        void UpdatePreview()
-        {
-            var renderedDiagram = MermaidDiagramViewFactory.Create(
-                MermaidSyntax.NormalizeCode(textBox.Text ?? string.Empty),
-                context.AvailableWidth,
-                context.RenderContext);
-            previewHost.Child = renderedDiagram.Control;
-        }
-
-        textBox.TextChanged += (_, _) => UpdatePreview();
-        UpdatePreview();
+        context.TrackResource(new MermaidEditorPreviewController(
+            textBox,
+            previewHost,
+            _renderer,
+            context.RenderContext.ThemePalette ??
+            MarkdownThemePalette.Resolve(context.RenderContext.Foreground),
+            context.RenderContext.FontFamily.Name,
+            context.RenderContext.FontSize));
 
         var body = new StackPanel
         {
@@ -358,5 +375,80 @@ internal sealed class MermaidDiagramEditorPlugin : IMarkdownEditorPlugin
         var normalized = MermaidSyntax.NormalizeCode(source);
         var fence = normalized.Contains("```", StringComparison.Ordinal) ? "~~~~" : "```";
         return $"{fence}mermaid\n{normalized}\n{fence}";
+    }
+}
+
+internal sealed class MermaidEditorPreviewController : IDisposable
+{
+    private static readonly TimeSpan PreviewDebounce = TimeSpan.FromMilliseconds(200);
+    private readonly TextBox _textBox;
+    private readonly Border _previewHost;
+    private readonly MermaiderSvgRenderer _renderer;
+    private readonly MarkdownThemePalette _palette;
+    private readonly string _fontFamily;
+    private readonly double _fontSize;
+    private readonly DispatcherTimer _timer;
+    private MermaidDiagramControl? _current;
+    private bool _isDisposed;
+
+    public MermaidEditorPreviewController(
+        TextBox textBox,
+        Border previewHost,
+        MermaiderSvgRenderer renderer,
+        MarkdownThemePalette palette,
+        string fontFamily,
+        double fontSize)
+    {
+        _textBox = textBox;
+        _previewHost = previewHost;
+        _renderer = renderer;
+        _palette = palette;
+        _fontFamily = fontFamily;
+        _fontSize = fontSize;
+        _timer = new DispatcherTimer(PreviewDebounce, DispatcherPriority.Background, OnTimerTick);
+        _textBox.TextChanged += OnTextChanged;
+        ReplacePreview();
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+            return;
+        _isDisposed = true;
+        _timer.Stop();
+        _timer.Tick -= OnTimerTick;
+        _textBox.TextChanged -= OnTextChanged;
+        _previewHost.Child = null;
+        _current?.Dispose();
+        _current = null;
+    }
+
+    private void OnTextChanged(object? sender, TextChangedEventArgs args)
+    {
+        _timer.Stop();
+        _timer.Start();
+    }
+
+    private void OnTimerTick(object? sender, EventArgs args)
+    {
+        _timer.Stop();
+        ReplacePreview();
+    }
+
+    private void ReplacePreview()
+    {
+        if (_isDisposed)
+            return;
+
+        var next = new MermaidDiagramControl(
+            _renderer,
+            MermaidSyntax.NormalizeCode(_textBox.Text ?? string.Empty),
+            _palette,
+            _fontFamily,
+            _fontSize);
+        var previous = _current;
+        _current = next;
+        _previewHost.Child = next;
+        previous?.Dispose();
     }
 }
