@@ -12,13 +12,13 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@wieslawsoltes">
 <meta name="twitter:title" content="Development | CodexGui">
-<meta name="twitter:description" content="Development CodexGui is a .NET 10 repository with a desktop app, a transport library, and multiple markdown libraries. Contributor workflows should validate both the solution and the docs site. Core validation path build the solution run the solution test baseline regenerate and validate the Lunet docs site Key files .github/workflows/build.yml .github/workflows/docs.yml .config/dotnet-tools.json build-docs.sh / check-docs.sh / serve-docs.sh...">
+<meta name="twitter:description" content="Development CodexGui is a .NET 10 repository with a desktop app, a transport library, and ProMarkdown as a Git submodule. Contributor workflows should initialize dependencies and validate both the solution and docs site. Core validation path build the solution package the CodexGui app and app-server projects regenerate and validate the Lunet docs site Key files .github/workflows/build.yml .github/workflows/docs.yml .config/dotnet-tools.json build-docs.sh...">
 <meta name="twitter:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
 <meta name="twitter:image:alt" content="Development | CodexGui">
 <meta property="og:title" content="Development | CodexGui">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://wieslawsoltes.github.io/CodexGui">
-<meta property="og:description" content="Development CodexGui is a .NET 10 repository with a desktop app, a transport library, and multiple markdown libraries. Contributor workflows should validate both the solution and the docs site. Core validation path build the solution run the solution test baseline regenerate and validate the Lunet docs site Key files .github/workflows/build.yml .github/workflows/docs.yml .config/dotnet-tools.json build-docs.sh / check-docs.sh / serve-docs.sh...">
+<meta property="og:description" content="Development CodexGui is a .NET 10 repository with a desktop app, a transport library, and ProMarkdown as a Git submodule. Contributor workflows should initialize dependencies and validate both the solution and docs site. Core validation path build the solution package the CodexGui app and app-server projects regenerate and validate the Lunet docs site Key files .github/workflows/build.yml .github/workflows/docs.yml .config/dotnet-tools.json build-docs.sh...">
 <meta property="og:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
 <meta property="og:image:alt" content="Development | CodexGui">
   </head>
@@ -100,7 +100,7 @@
             <li id='menu-item-development-1' class='menu-item '>
               <span class='menu-item-row'><a href='/CodexGui/articles/development/' class='menu-link  '>Development</a></span>  </li>
             <li id='menu-item-development-2' class='menu-item '>
-              <span class='menu-item-row'><a href='/CodexGui/articles/development/build-test-and-docs/' class='menu-link  '>Build, Test, and Docs</a></span>  </li>
+              <span class='menu-item-row'><a href='/CodexGui/articles/development/build-package-and-docs/' class='menu-link  '>Build, Package, and Docs</a></span>  </li>
           </ol>
 
         </div>
@@ -146,11 +146,11 @@
         </div>
 <!-- lunet:summarize -->
 <h1 id="development">Development</h1>
-<p>CodexGui is a .NET 10 repository with a desktop app, a transport library, and multiple markdown libraries. Contributor workflows should validate both the solution and the docs site.</p>
+<p>CodexGui is a .NET 10 repository with a desktop app, a transport library, and ProMarkdown as a Git submodule. Contributor workflows should initialize dependencies and validate both the solution and docs site.</p>
 <h2 id="core-validation-path">Core validation path</h2>
 <ul>
 <li>build the solution</li>
-<li>run the solution test baseline</li>
+<li>package the CodexGui app and app-server projects</li>
 <li>regenerate and validate the Lunet docs site</li>
 </ul>
 <h2 id="key-files">Key files</h2>
@@ -161,7 +161,7 @@
 <li><code>build-docs.sh</code> / <code>check-docs.sh</code> / <code>serve-docs.sh</code></li>
 <li><code>site/</code></li>
 </ul>
-<p>Continue with <a href="/CodexGui/articles/development/build-test-and-docs">Build, Test, and Docs</a> for the exact commands.</p>
+<p>Continue with <a href="/CodexGui/articles/development/build-package-and-docs">Build, Package, and Docs</a> for the exact commands.</p>
 
       </div>
   </div>

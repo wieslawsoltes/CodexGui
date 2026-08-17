@@ -12,13 +12,13 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@wieslawsoltes">
 <meta name="twitter:title" content="Running the App | CodexGui">
-<meta name="twitter:description" content="Running the App Prerequisites .NET 10 SDK a local codex executable on PATH if you want to use the default process transport Build the solution dotnet build CodexGui.slnx Run the desktop client dotnet run --project src/CodexGui.App/CodexGui.App.csproj When the window opens, the default connection settings target codex app-server. You can replace that with a remote ws:// or wss:// endpoint in the connection sidebar. Run the markdown sample...">
+<meta name="twitter:description" content="Running the App Prerequisites .NET 10 SDK a local codex executable on PATH if you want to use the default process transport Build the solution git submodule update --init --recursive dotnet build CodexGui.slnx Run the desktop client dotnet run --project src/CodexGui.App/CodexGui.App.csproj When the window opens, the default connection settings target codex app-server. You can replace that with a remote ws:// or wss:// endpoint in the connection sidebar....">
 <meta name="twitter:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
 <meta name="twitter:image:alt" content="Running the App | CodexGui">
 <meta property="og:title" content="Running the App | CodexGui">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://wieslawsoltes.github.io/CodexGui">
-<meta property="og:description" content="Running the App Prerequisites .NET 10 SDK a local codex executable on PATH if you want to use the default process transport Build the solution dotnet build CodexGui.slnx Run the desktop client dotnet run --project src/CodexGui.App/CodexGui.App.csproj When the window opens, the default connection settings target codex app-server. You can replace that with a remote ws:// or wss:// endpoint in the connection sidebar. Run the markdown sample...">
+<meta property="og:description" content="Running the App Prerequisites .NET 10 SDK a local codex executable on PATH if you want to use the default process transport Build the solution git submodule update --init --recursive dotnet build CodexGui.slnx Run the desktop client dotnet run --project src/CodexGui.App/CodexGui.App.csproj When the window opens, the default connection settings target codex app-server. You can replace that with a remote ws:// or wss:// endpoint in the connection sidebar....">
 <meta property="og:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
 <meta property="og:image:alt" content="Running the App | CodexGui">
   </head>
@@ -156,16 +156,13 @@
 <li>a local <code>codex</code> executable on <code>PATH</code> if you want to use the default process transport</li>
 </ul>
 <h2 id="build-the-solution">Build the solution</h2>
-<pre><code class="language-bash">dotnet build CodexGui.slnx
+<pre><code class="language-bash">git submodule update --init --recursive
+dotnet build CodexGui.slnx
 </code></pre>
 <h2 id="run-the-desktop-client">Run the desktop client</h2>
 <pre><code class="language-bash">dotnet run --project src/CodexGui.App/CodexGui.App.csproj
 </code></pre>
 <p>When the window opens, the default connection settings target <code>codex app-server</code>. You can replace that with a remote <code>ws://</code> or <code>wss://</code> endpoint in the connection sidebar.</p>
-<h2 id="run-the-markdown-sample">Run the markdown sample</h2>
-<pre><code class="language-bash">dotnet run --project src/CodexGui.Markdown.Sample/CodexGui.Markdown.Sample.csproj
-</code></pre>
-<p>The sample app is useful when you want to work on markdown rendering or editor behavior without running the full Codex shell.</p>
 <h2 id="local-documentation-site">Local documentation site</h2>
 <pre><code class="language-bash">dotnet tool restore
 bash ./serve-docs.sh

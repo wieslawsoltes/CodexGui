@@ -6,21 +6,21 @@
     <meta name="generator" content="lunet 1.0.10.0">
     <script>(function(){const root=document.documentElement;const key=root.getAttribute("data-lunet-theme-storage-key")||"lunet-theme";const fallback=root.getAttribute("data-lunet-theme-mode")||"system";let stored=null;try{stored=localStorage.getItem(key);}catch(_){stored=null;}const mode=(stored==="light"||stored==="dark"||stored==="system")?stored:fallback;const prefersDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;const resolved=mode==="system"?(prefersDark?"dark":"light"):mode;root.setAttribute("data-lunet-theme-mode",mode);root.setAttribute("data-bs-theme",resolved);}());</script>
     <link rel='icon' href='/CodexGui/favicon.ico' sizes='32x32'>
-    <title>Plugin Ecosystem | CodexGui</title>
+    <title>Build, Package, and Docs | CodexGui</title>
     <link rel="stylesheet" href="/CodexGui/css/lite.css">
     <script src="/CodexGui/js/lite-defer.js" defer></script>
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@wieslawsoltes">
-<meta name="twitter:title" content="Plugin Ecosystem | CodexGui">
-<meta name="twitter:description" content="Plugin Ecosystem The repository currently includes these markdown-related projects: CodexGui.Markdown - core rendering and editing services CodexGui.Markdown.Plugin.Alerts - alert or callout blocks CodexGui.Markdown.Plugin.CustomContainers - generic custom container support CodexGui.Markdown.Plugin.DefinitionLists - definition list rendering and editing CodexGui.Markdown.Plugin.Figures - figure blocks and captions CodexGui.Markdown.Plugin.Footers - footer metadata blocks CodexGui.Markdown.Plugin.Math - mathematical notation support CodexGui.Markdown.Plugin.Mermaid - Mermaid diagram rendering...">
+<meta name="twitter:title" content="Build, Package, and Docs | CodexGui">
+<meta name="twitter:description" content="Build, Package, and Docs Initialize the submodule git submodule update --init --recursive Solution commands dotnet build CodexGui.slnx dotnet pack CodexGui.slnx -c Release -o artifacts/packages Lunet docs commands dotnet tool restore bash ./build-docs.sh bash ./check-docs.sh bash ./serve-docs.sh PowerShell equivalents are also available: ./build-docs.ps1 ./check-docs.ps1 ./serve-docs.ps1 CI layout build.yml initializes submodules and validates build, docs generation, and CodexGui package creation....">
 <meta name="twitter:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
-<meta name="twitter:image:alt" content="Plugin Ecosystem | CodexGui">
-<meta property="og:title" content="Plugin Ecosystem | CodexGui">
+<meta name="twitter:image:alt" content="Build, Package, and Docs | CodexGui">
+<meta property="og:title" content="Build, Package, and Docs | CodexGui">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://wieslawsoltes.github.io/CodexGui">
-<meta property="og:description" content="Plugin Ecosystem The repository currently includes these markdown-related projects: CodexGui.Markdown - core rendering and editing services CodexGui.Markdown.Plugin.Alerts - alert or callout blocks CodexGui.Markdown.Plugin.CustomContainers - generic custom container support CodexGui.Markdown.Plugin.DefinitionLists - definition list rendering and editing CodexGui.Markdown.Plugin.Figures - figure blocks and captions CodexGui.Markdown.Plugin.Footers - footer metadata blocks CodexGui.Markdown.Plugin.Math - mathematical notation support CodexGui.Markdown.Plugin.Mermaid - Mermaid diagram rendering...">
+<meta property="og:description" content="Build, Package, and Docs Initialize the submodule git submodule update --init --recursive Solution commands dotnet build CodexGui.slnx dotnet pack CodexGui.slnx -c Release -o artifacts/packages Lunet docs commands dotnet tool restore bash ./build-docs.sh bash ./check-docs.sh bash ./serve-docs.sh PowerShell equivalents are also available: ./build-docs.ps1 ./check-docs.ps1 ./serve-docs.ps1 CI layout build.yml initializes submodules and validates build, docs generation, and CodexGui package creation....">
 <meta property="og:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
-<meta property="og:image:alt" content="Plugin Ecosystem | CodexGui">
+<meta property="og:image:alt" content="Build, Package, and Docs | CodexGui">
   </head>
   <body>
 
@@ -96,11 +96,11 @@
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#docs-sidebar-menu" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-          <ol id='menu-id-markdown-0' class='menu menu-level0 show '>
-            <li id='menu-item-markdown-1' class='menu-item '>
-              <span class='menu-item-row'><a href='/CodexGui/articles/markdown/' class='menu-link  '>Markdown Stack</a></span>  </li>
-            <li id='menu-item-markdown-2' class='menu-item  active'>
-              <span class='menu-item-row'><a href='/CodexGui/articles/markdown/plugin-ecosystem/' class='menu-link  '>Plugin Ecosystem</a></span>  </li>
+          <ol id='menu-id-development-0' class='menu menu-level0 show '>
+            <li id='menu-item-development-1' class='menu-item '>
+              <span class='menu-item-row'><a href='/CodexGui/articles/development/' class='menu-link  '>Development</a></span>  </li>
+            <li id='menu-item-development-2' class='menu-item  active'>
+              <span class='menu-item-row'><a href='/CodexGui/articles/development/build-package-and-docs/' class='menu-link  '>Build, Package, and Docs</a></span>  </li>
           </ol>
 
         </div>
@@ -118,9 +118,9 @@
           <li class='breadcrumb-item '>
             <a href='/CodexGui/articles/' class='breadcrumb-link  '><i class='bi bi-book' aria-hidden='true'></i> Docs</a>  </li>
           <li class='breadcrumb-item '>
-            <a href='/CodexGui/articles/markdown/' class='breadcrumb-link  '>Markdown Stack</a>  </li>
+            <a href='/CodexGui/articles/development/' class='breadcrumb-link  '>Development</a>  </li>
           <li class='breadcrumb-item  active'>
-            Plugin Ecosystem  </li>
+            Build, Package, and Docs  </li>
         </ol>
 
         <p id="lunet-results"></p>
@@ -147,29 +147,42 @@
           </button>
         </div>
 <!-- lunet:summarize -->
-<h1 id="plugin-ecosystem">Plugin Ecosystem</h1>
-<p>The repository currently includes these markdown-related projects:</p>
+<h1 id="build-package-and-docs">Build, Package, and Docs</h1>
+<h2 id="initialize-the-submodule">Initialize the submodule</h2>
+<pre><code class="language-bash">git submodule update --init --recursive
+</code></pre>
+<h2 id="solution-commands">Solution commands</h2>
+<pre><code class="language-bash">dotnet build CodexGui.slnx
+dotnet pack CodexGui.slnx -c Release -o artifacts/packages
+</code></pre>
+<h2 id="lunet-docs-commands">Lunet docs commands</h2>
+<pre><code class="language-bash">dotnet tool restore
+bash ./build-docs.sh
+bash ./check-docs.sh
+bash ./serve-docs.sh
+</code></pre>
+<p>PowerShell equivalents are also available:</p>
+<pre><code class="language-powershell">./build-docs.ps1
+./check-docs.ps1
+./serve-docs.ps1
+</code></pre>
+<h2 id="ci-layout">CI layout</h2>
 <ul>
-<li><code>CodexGui.Markdown</code> - core rendering and editing services</li>
-<li><code>CodexGui.Markdown.Plugin.Alerts</code> - alert or callout blocks</li>
-<li><code>CodexGui.Markdown.Plugin.CustomContainers</code> - generic custom container support</li>
-<li><code>CodexGui.Markdown.Plugin.DefinitionLists</code> - definition list rendering and editing</li>
-<li><code>CodexGui.Markdown.Plugin.Figures</code> - figure blocks and captions</li>
-<li><code>CodexGui.Markdown.Plugin.Footers</code> - footer metadata blocks</li>
-<li><code>CodexGui.Markdown.Plugin.Math</code> - mathematical notation support</li>
-<li><code>CodexGui.Markdown.Plugin.Mermaid</code> - Mermaid diagram rendering</li>
-<li><code>CodexGui.Markdown.Plugin.SyntaxHighlighting</code> - syntax highlighting integration</li>
-<li><code>CodexGui.Markdown.Plugin.TextMate</code> - TextMate-based editing and highlighting integration</li>
-<li><code>CodexGui.Markdown.Sample</code> - sample application wiring all of the above together</li>
+<li><code>build.yml</code> initializes submodules and validates build, docs generation, and CodexGui package creation.</li>
+<li><code>docs.yml</code> deploys the Lunet site to GitHub Pages for the main or master branch.</li>
+<li><code>release.yml</code> builds tagged releases, publishes the CodexGui app and app-server packages, and creates the GitHub release.</li>
 </ul>
-<h2 id="design-direction">Design direction</h2>
-<p>This split mirrors the repository's broader architecture approach:</p>
+<h2 id="site-structure">Site structure</h2>
+<p>The Lunet site lives under <code>site/</code> and follows the template-first pattern:</p>
 <ul>
-<li>keep the core focused</li>
-<li>isolate optional or specialized behavior in small projects</li>
-<li>make registration explicit in consumers</li>
-<li>support reuse outside the main Codex desktop application</li>
+<li><code>site/config.scriban</code> for project metadata and theme configuration</li>
+<li><code>site/menu.yml</code> for top navigation</li>
+<li><code>site/articles/</code> for documentation content and section menus</li>
+<li><code>site/.lunet/css/template-main.css</code> for the precompiled template stylesheet used by the macOS-safe docs bundle</li>
+<li><code>site/.lunet/css/site-overrides.css</code> for project-specific branding, home-page polish, and site-wide Lunet visual refinements</li>
+<li><code>site/.lunet/includes/_builtins/bundle.sbn-html</code> for bundle link resolution when pages opt into the custom docs bundle</li>
 </ul>
+<p>The generated output goes to <code>site/.lunet/build/www/</code> and should never be committed. The docs validation scripts also verify that the generated <code>css/lite.css</code> bundle includes the CodexGui home-page selectors so styling regressions are caught in CI.</p>
 
       </div>
   </div>

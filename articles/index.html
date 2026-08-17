@@ -12,13 +12,13 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@wieslawsoltes">
 <meta name="twitter:title" content="Documentation | CodexGui">
-<meta name="twitter:description" content="Documentation This site covers CodexGui from five practical angles: how to build the solution, run the desktop application, and connect to a Codex app-server how the Avalonia shell, transport client, and interactive session workflow fit together how the reusable markdown subsystem is split across the core library and plugin projects how to work on the repository, validate changes, and use the Lunet docs pipeline how the source tree and roadmap...">
+<meta name="twitter:description" content="Documentation This site covers CodexGui from four practical angles: cloning with the ProMarkdown submodule, building the solution, and running the desktop app understanding the Avalonia shell, transport client, and interactive session workflow contributing safely through the build, package, and Lunet documentation workflows navigating the repository structure and active roadmap Read by intent I want to run CodexGui Getting Started Overview Running the App I want to understand the desktop client...">
 <meta name="twitter:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
 <meta name="twitter:image:alt" content="Documentation | CodexGui">
 <meta property="og:title" content="Documentation | CodexGui">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://wieslawsoltes.github.io/CodexGui">
-<meta property="og:description" content="Documentation This site covers CodexGui from five practical angles: how to build the solution, run the desktop application, and connect to a Codex app-server how the Avalonia shell, transport client, and interactive session workflow fit together how the reusable markdown subsystem is split across the core library and plugin projects how to work on the repository, validate changes, and use the Lunet docs pipeline how the source tree and roadmap...">
+<meta property="og:description" content="Documentation This site covers CodexGui from four practical angles: cloning with the ProMarkdown submodule, building the solution, and running the desktop app understanding the Avalonia shell, transport client, and interactive session workflow contributing safely through the build, package, and Lunet documentation workflows navigating the repository structure and active roadmap Read by intent I want to run CodexGui Getting Started Overview Running the App I want to understand the desktop client...">
 <meta property="og:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
 <meta property="og:image:alt" content="Documentation | CodexGui">
   </head>
@@ -96,7 +96,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#docs-sidebar-menu" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-          <div class='lunet-menu-async' data-lunet-menu-partial='/CodexGui/partials/menus/menu-articles.424723a43b1ace33bfc40be5a9674669.html' data-lunet-menu-open='menu-id-articles-0' data-lunet-menu-active='menu-item-articles-0'><div class='menu-loading text-body-secondary small'>Loading menu…</div></div>
+          <div class='lunet-menu-async' data-lunet-menu-partial='/CodexGui/partials/menus/menu-articles.1aaee8948c2b5405cdfe993f212b1596.html' data-lunet-menu-open='menu-id-articles-0' data-lunet-menu-active='menu-item-articles-0'><div class='menu-loading text-body-secondary small'>Loading menu…</div></div>
         </div>
       </nav>
       <!-- Right sidebar (TOC) - collapsible on mobile, visible sidebar on xxl+ -->
@@ -138,59 +138,37 @@
         </div>
 <!-- lunet:summarize -->
 <h1 id="documentation">Documentation</h1>
-<p>This site covers CodexGui from five practical angles:</p>
+<p>This site covers CodexGui from four practical angles:</p>
 <ul>
-<li>how to build the solution, run the desktop application, and connect to a Codex app-server</li>
-<li>how the Avalonia shell, transport client, and interactive session workflow fit together</li>
-<li>how the reusable markdown subsystem is split across the core library and plugin projects</li>
-<li>how to work on the repository, validate changes, and use the Lunet docs pipeline</li>
-<li>how the source tree and roadmap are organized today</li>
+<li>cloning with the ProMarkdown submodule, building the solution, and running the desktop app</li>
+<li>understanding the Avalonia shell, transport client, and interactive session workflow</li>
+<li>contributing safely through the build, package, and Lunet documentation workflows</li>
+<li>navigating the repository structure and active roadmap</li>
 </ul>
 <h2 id="read-by-intent">Read by intent</h2>
-<h3 id="i-want-to-run-codexgui-quickly">I want to run CodexGui quickly</h3>
-<p>Start with:</p>
+<h3 id="i-want-to-run-codexgui">I want to run CodexGui</h3>
 <ol>
 <li><a href="/CodexGui/articles/getting-started">Getting Started</a></li>
 <li><a href="/CodexGui/articles/getting-started/overview">Overview</a></li>
 <li><a href="/CodexGui/articles/getting-started/running-the-app">Running the App</a></li>
 </ol>
-<h3 id="i-want-to-understand-how-the-desktop-client-works">I want to understand how the desktop client works</h3>
-<p>Start with:</p>
+<h3 id="i-want-to-understand-the-desktop-client">I want to understand the desktop client</h3>
 <ol>
 <li><a href="/CodexGui/articles/application">Application Shell</a></li>
 <li><a href="/CodexGui/articles/application/shell-and-transport">Shell and Transport</a></li>
 <li><a href="/CodexGui/articles/application/interaction-model">Interaction Model</a></li>
 </ol>
-<h3 id="i-want-to-work-on-markdown-rendering-or-editor-features">I want to work on markdown rendering or editor features</h3>
-<p>Start with:</p>
-<ol>
-<li><a href="/CodexGui/articles/markdown">Markdown Stack</a></li>
-<li><a href="/CodexGui/articles/markdown/plugin-ecosystem">Plugin Ecosystem</a></li>
-<li><a href="/CodexGui/articles/reference">Reference</a></li>
-</ol>
-<h3 id="i-want-to-contribute-safely">I want to contribute safely</h3>
-<p>Start with:</p>
+<h3 id="i-want-to-contribute">I want to contribute</h3>
 <ol>
 <li><a href="/CodexGui/articles/development">Development</a></li>
-<li><a href="/CodexGui/articles/development/build-test-and-docs">Build, Test, and Docs</a></li>
+<li><a href="/CodexGui/articles/development/build-package-and-docs">Build, Package, and Docs</a></li>
 <li><a href="/CodexGui/articles/reference/repository-structure">Repository Structure</a></li>
 </ol>
-<h2 id="task-first-entry-points">Task-first entry points</h2>
-<ul>
-<li><a href="/CodexGui/articles/getting-started/overview">Overview</a></li>
-<li><a href="/CodexGui/articles/getting-started/running-the-app">Running the App</a></li>
-<li><a href="/CodexGui/articles/application/shell-and-transport">Shell and Transport</a></li>
-<li><a href="/CodexGui/articles/application/interaction-model">Interaction Model</a></li>
-<li><a href="/CodexGui/articles/markdown/plugin-ecosystem">Plugin Ecosystem</a></li>
-<li><a href="/CodexGui/articles/development/build-test-and-docs">Build, Test, and Docs</a></li>
-<li><a href="/CodexGui/articles/reference/repository-structure">Repository Structure</a></li>
-<li><a href="/CodexGui/articles/reference/roadmap">Roadmap</a></li>
-</ul>
+<p>Markdown library development, plugins, tests, samples, and documentation live in the <a href="https://github.com/wieslawsoltes/ProMarkdown">ProMarkdown repository</a>.</p>
 <h2 id="sections">Sections</h2>
 <ul>
 <li><a href="/CodexGui/articles/getting-started">Getting Started</a></li>
 <li><a href="/CodexGui/articles/application">Application Shell</a></li>
-<li><a href="/CodexGui/articles/markdown">Markdown Stack</a></li>
 <li><a href="/CodexGui/articles/development">Development</a></li>
 <li><a href="/CodexGui/articles/reference">Reference</a></li>
 </ul>

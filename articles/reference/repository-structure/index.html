@@ -12,13 +12,13 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@wieslawsoltes">
 <meta name="twitter:title" content="Repository Structure | CodexGui">
-<meta name="twitter:description" content="Repository Structure Top-level layout src/ - application, transport, markdown libraries, and sample projects docs/ - tracked internal design and implementation notes site/ - Lunet documentation site content and configuration .github/workflows/ - build and docs automation .config/dotnet-tools.json - local tool manifest for Lunet Solution projects CodexGui.App - Avalonia desktop shell CodexGui.AppServer - generated DTOs and JSON-RPC transport CodexGui.Markdown - core markdown library CodexGui.Markdown.Plugin.* - plugin packages for optional markdown features...">
+<meta name="twitter:description" content="Repository Structure Top-level layout src/ - application and transport projects external/ProMarkdown/ - pinned Markdown library Git submodule site/ - Lunet documentation site content and configuration .github/workflows/ - build and docs automation .config/dotnet-tools.json - local tool manifest for Lunet Solution projects CodexGui.App - Avalonia desktop shell CodexGui.AppServer - generated DTOs and JSON-RPC transport The app references external/ProMarkdown/src/ProMarkdown/ProMarkdown.csproj for its Markdown control. Practical reading order...">
 <meta name="twitter:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
 <meta name="twitter:image:alt" content="Repository Structure | CodexGui">
 <meta property="og:title" content="Repository Structure | CodexGui">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://wieslawsoltes.github.io/CodexGui">
-<meta property="og:description" content="Repository Structure Top-level layout src/ - application, transport, markdown libraries, and sample projects docs/ - tracked internal design and implementation notes site/ - Lunet documentation site content and configuration .github/workflows/ - build and docs automation .config/dotnet-tools.json - local tool manifest for Lunet Solution projects CodexGui.App - Avalonia desktop shell CodexGui.AppServer - generated DTOs and JSON-RPC transport CodexGui.Markdown - core markdown library CodexGui.Markdown.Plugin.* - plugin packages for optional markdown features...">
+<meta property="og:description" content="Repository Structure Top-level layout src/ - application and transport projects external/ProMarkdown/ - pinned Markdown library Git submodule site/ - Lunet documentation site content and configuration .github/workflows/ - build and docs automation .config/dotnet-tools.json - local tool manifest for Lunet Solution projects CodexGui.App - Avalonia desktop shell CodexGui.AppServer - generated DTOs and JSON-RPC transport The app references external/ProMarkdown/src/ProMarkdown/ProMarkdown.csproj for its Markdown control. Practical reading order...">
 <meta property="og:image" content="https://wieslawsoltes.github.io/CodexGui/img/codexgui-social-banner.svg">
 <meta property="og:image:alt" content="Repository Structure | CodexGui">
   </head>
@@ -152,8 +152,8 @@
 <h1 id="repository-structure">Repository Structure</h1>
 <h2 id="top-level-layout">Top-level layout</h2>
 <ul>
-<li><code>src/</code> - application, transport, markdown libraries, and sample projects</li>
-<li><code>docs/</code> - tracked internal design and implementation notes</li>
+<li><code>src/</code> - application and transport projects</li>
+<li><code>external/ProMarkdown/</code> - pinned Markdown library Git submodule</li>
 <li><code>site/</code> - Lunet documentation site content and configuration</li>
 <li><code>.github/workflows/</code> - build and docs automation</li>
 <li><code>.config/dotnet-tools.json</code> - local tool manifest for Lunet</li>
@@ -162,17 +162,15 @@
 <ul>
 <li><code>CodexGui.App</code> - Avalonia desktop shell</li>
 <li><code>CodexGui.AppServer</code> - generated DTOs and JSON-RPC transport</li>
-<li><code>CodexGui.Markdown</code> - core markdown library</li>
-<li><code>CodexGui.Markdown.Plugin.*</code> - plugin packages for optional markdown features</li>
-<li><code>CodexGui.Markdown.Sample</code> - sample application for the markdown stack</li>
 </ul>
+<p>The app references <code>external/ProMarkdown/src/ProMarkdown/ProMarkdown.csproj</code> for its Markdown control.</p>
 <h2 id="practical-reading-order">Practical reading order</h2>
 <ol>
 <li><code>README.md</code></li>
 <li><code>site/articles/</code></li>
 <li><code>src/CodexGui.App</code></li>
 <li><code>src/CodexGui.AppServer</code></li>
-<li>markdown libraries and plugin projects under <code>src/</code></li>
+<li>the <a href="https://github.com/wieslawsoltes/ProMarkdown">ProMarkdown repository</a> for Markdown library development</li>
 </ol>
 
       </div>
