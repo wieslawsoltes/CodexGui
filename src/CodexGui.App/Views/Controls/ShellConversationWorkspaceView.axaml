@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:CodexGui.App.ViewModels"
-             xmlns:md="using:CodexGui.Markdown.Controls"
+             xmlns:md="using:ProMarkdown.Controls"
              xmlns:ic="using:FluentIcons.Avalonia"
              x:Class="CodexGui.App.Views.Controls.ShellConversationWorkspaceView"
              x:DataType="vm:MainWindowViewModel">

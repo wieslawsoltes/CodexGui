@@ -6,10 +6,10 @@ title: "Getting Started"
 
 CodexGui is a .NET 10 solution centered around an Avalonia desktop client. The fastest way to get productive is:
 
-1. build the solution from the repository root
-2. run the desktop app or the markdown sample
-3. connect to a local `codex app-server` process or a remote WebSocket endpoint
-4. use the docs and source tree together as you inspect or extend the application
+1. initialize the ProMarkdown submodule
+2. build the solution from the repository root
+3. run the desktop app
+4. connect to a local `codex app-server` process or a remote WebSocket endpoint
 
 ## Start here
 
@@ -20,5 +20,5 @@ CodexGui is a .NET 10 solution centered around an Avalonia desktop client. The f
 
 - Main shell: `src/CodexGui.App`
 - App-server client: `src/CodexGui.AppServer`
-- Markdown libraries and sample: `src/CodexGui.Markdown*`
+- Markdown dependency: `external/ProMarkdown`
 - Solution file: `CodexGui.slnx`

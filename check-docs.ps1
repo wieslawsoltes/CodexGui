@@ -42,10 +42,8 @@ $requiredFiles = @(
     (Join-Path $docRoot 'articles/getting-started/overview/index.html'),
     (Join-Path $docRoot 'articles/application/index.html'),
     (Join-Path $docRoot 'articles/application/shell-and-transport/index.html'),
-    (Join-Path $docRoot 'articles/markdown/index.html'),
-    (Join-Path $docRoot 'articles/markdown/plugin-ecosystem/index.html'),
     (Join-Path $docRoot 'articles/development/index.html'),
-    (Join-Path $docRoot 'articles/development/build-test-and-docs/index.html'),
+    (Join-Path $docRoot 'articles/development/build-package-and-docs/index.html'),
     (Join-Path $docRoot 'articles/reference/index.html'),
     (Join-Path $docRoot 'articles/reference/repository-structure/index.html'),
     (Join-Path $docRoot 'articles/reference/roadmap/index.html')

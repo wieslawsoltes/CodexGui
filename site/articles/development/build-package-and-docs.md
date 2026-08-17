@@ -1,14 +1,20 @@
 ---
-title: "Build, Test, and Docs"
+title: "Build, Package, and Docs"
 ---
 
-# Build, Test, and Docs
+# Build, Package, and Docs
+
+## Initialize the submodule
+
+```bash
+git submodule update --init --recursive
+```
 
 ## Solution commands
 
 ```bash
 dotnet build CodexGui.slnx
-dotnet test CodexGui.slnx
+dotnet pack CodexGui.slnx -c Release -o artifacts/packages
 ```
 
 ## Lunet docs commands
@@ -30,9 +36,9 @@ PowerShell equivalents are also available:
 
 ## CI layout
 
-- `build.yml` validates build, test, docs generation, and NuGet packaging on pushes and pull requests.
+- `build.yml` initializes submodules and validates build, docs generation, and CodexGui package creation.
 - `docs.yml` deploys the Lunet site to GitHub Pages for the main or master branch.
-- `release.yml` builds tagged releases, packs the reusable libraries, publishes them to NuGet.org, and creates the GitHub release.
+- `release.yml` builds tagged releases, publishes the CodexGui app and app-server packages, and creates the GitHub release.
 
 ## Site structure
 

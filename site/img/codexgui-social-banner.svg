@@ -51,7 +51,7 @@
     <text x="402" y="194" font-size="34" font-weight="600" opacity="0.78">Avalonia desktop client</text>
     <text x="402" y="304" font-size="108" font-weight="760">CodexGui</text>
     <text x="402" y="372" font-size="33" opacity="0.92">Native client for the Codex app-server protocol</text>
-    <text x="402" y="424" font-size="28" opacity="0.76">Typed transport, workspace shell, and reusable markdown rendering.</text>
+    <text x="402" y="424" font-size="28" opacity="0.76">Typed transport, workspace shell, and ProMarkdown rendering.</text>
   </g>
 
   <g transform="translate(402 468)" font-family="Inter, Segoe UI, Arial, sans-serif">
@@ -65,7 +65,7 @@
     </g>
     <g transform="translate(390 0)">
       <rect width="202" height="46" rx="23" fill="#ffffff" fill-opacity="0.10" stroke="#ffffff" stroke-opacity="0.20" />
-      <text x="101" y="29" fill="#ffffff" font-size="22" text-anchor="middle">Markdown stack</text>
+      <text x="101" y="29" fill="#ffffff" font-size="22" text-anchor="middle">ProMarkdown</text>
     </g>
   </g>
 </svg>

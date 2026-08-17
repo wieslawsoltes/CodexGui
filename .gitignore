@@ -401,12 +401,3 @@ FodyWeavers.xsd
 *.sln.iml
 /site/.lunet/build/
 /site/.lunet/.build-lock/
-/docs/*
-!/docs/markdown-rendering-plan.md
-!/docs/markdown-math-ast-plan.md
-!/docs/markdown-definition-list-ast-plan.md
-!/docs/markdown-alert-ast-plan.md
-!/docs/markdown-figure-ast-plan.md
-!/docs/markdown-container-footer-plugin-plan.md
-!/docs/markdown-syntax-highlighting-plugin-plan.md
-!/docs/markdown-remaining-gap-support-plan.md

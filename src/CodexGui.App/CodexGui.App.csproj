@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- Preserve the solution configuration for the ProMarkdown project outside CodexGui.slnx. -->
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -40,7 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CodexGui.Markdown\CodexGui.Markdown.csproj" />
+    <ProjectReference Include="..\..\external\ProMarkdown\src\ProMarkdown\ProMarkdown.csproj" />
     <ProjectReference Include="..\CodexGui.AppServer\CodexGui.AppServer.csproj" />
   </ItemGroup>
 </Project>

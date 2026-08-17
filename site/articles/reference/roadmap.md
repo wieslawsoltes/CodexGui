@@ -4,7 +4,7 @@ title: "Roadmap"
 
 # Roadmap
 
-CodexGui is in the parity-building phase described by the repository's implementation plan.
+CodexGui is in an active parity-building phase.
 
 ## Already landed
 
@@ -22,7 +22,3 @@ CodexGui is in the parity-building phase described by the repository's implement
 - broader auth management, including ChatGPT token refresh handling
 - deeper app and skill administration surfaces
 - parity for remaining server-request types and higher-volume streaming polish
-
-## Source of truth
-
-The most detailed roadmap narrative lives in the tracked repository document at [`docs/implementation-plan.md`](https://github.com/wieslawsoltes/CodexGui/blob/main/docs/implementation-plan.md).

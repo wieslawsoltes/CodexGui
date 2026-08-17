@@ -4,12 +4,12 @@ title: "Development"
 
 # Development
 
-CodexGui is a .NET 10 repository with a desktop app, a transport library, and multiple markdown libraries. Contributor workflows should validate both the solution and the docs site.
+CodexGui is a .NET 10 repository with a desktop app, a transport library, and ProMarkdown as a Git submodule. Contributor workflows should initialize dependencies and validate both the solution and docs site.
 
 ## Core validation path
 
 - build the solution
-- run the solution test baseline
+- package the CodexGui app and app-server projects
 - regenerate and validate the Lunet docs site
 
 ## Key files
@@ -20,4 +20,4 @@ CodexGui is a .NET 10 repository with a desktop app, a transport library, and mu
 - `build-docs.sh` / `check-docs.sh` / `serve-docs.sh`
 - `site/`
 
-Continue with [Build, Test, and Docs](build-test-and-docs/) for the exact commands.
+Continue with [Build, Package, and Docs](build-package-and-docs/) for the exact commands.

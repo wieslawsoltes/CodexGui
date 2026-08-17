@@ -12,6 +12,7 @@ title: "Running the App"
 ## Build the solution
 
 ```bash
+git submodule update --init --recursive
 dotnet build CodexGui.slnx
 ```
 
@@ -22,14 +23,6 @@ dotnet run --project src/CodexGui.App/CodexGui.App.csproj
 ```
 
 When the window opens, the default connection settings target `codex app-server`. You can replace that with a remote `ws://` or `wss://` endpoint in the connection sidebar.
-
-## Run the markdown sample
-
-```bash
-dotnet run --project src/CodexGui.Markdown.Sample/CodexGui.Markdown.Sample.csproj
-```
-
-The sample app is useful when you want to work on markdown rendering or editor behavior without running the full Codex shell.
 
 ## Local documentation site
 

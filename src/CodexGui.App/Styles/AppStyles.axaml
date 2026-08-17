@@ -1,6 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="using:CodexGui.Markdown.Controls"
+        xmlns:controls="using:ProMarkdown.Controls"
         xmlns:shell="using:CodexGui.App.Views.Controls"
         xmlns:ic="using:FluentIcons.Avalonia">
     <Style Selector="Window">

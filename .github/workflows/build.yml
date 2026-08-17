@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -37,46 +39,6 @@ jobs:
 
       - name: Build
         run: dotnet build CodexGui.slnx -c Release --no-restore
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Restore
-        run: dotnet restore CodexGui.slnx
-
-      - name: Build
-        run: dotnet build CodexGui.slnx -c Release --no-restore
-
-      - name: Test
-        run: dotnet test CodexGui.slnx -c Release --no-build --report-xunit-trx --results-directory artifacts/test
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: artifacts/test/**/*.trx
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Publish test results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Test Results
-          path: artifacts/test/**/*.trx
-          reporter: dotnet-trx
-          fail-on-empty: false
 
   docs:
     name: Docs
@@ -85,6 +47,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v4
@@ -108,10 +72,12 @@ jobs:
   pack:
     name: Pack
     runs-on: ubuntu-latest
-    needs: [build, test]
+    needs: build
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

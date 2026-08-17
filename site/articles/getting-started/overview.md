@@ -13,7 +13,7 @@ The current codebase already includes:
 - remote `ws://` and `wss://` transport support
 - strict `initialize` / `initialized` connection handling
 - turn authoring, thread start/resume, interrupts, and pending approval surfaces
-- reusable markdown rendering and editing packages with multiple feature plugins
+- rich document rendering through the pinned ProMarkdown submodule
 
 ## Connection model
 
@@ -23,4 +23,4 @@ By default, the application starts with `codex` as the command path and `app-ser
 
 - [Running the App](running-the-app/)
 - [Shell and Transport](../application/shell-and-transport/)
-- [Plugin Ecosystem](../markdown/plugin-ecosystem/)
+- [ProMarkdown repository](https://github.com/wieslawsoltes/ProMarkdown)
