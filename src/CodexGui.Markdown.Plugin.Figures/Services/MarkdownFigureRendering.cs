@@ -93,7 +93,6 @@ internal static class MarkdownFigureRendering
     {
         return new MarkdownTextBlock
         {
-            Markdown = markdown,
             BaseUri = renderContext.BaseUri,
             RenderController = NestedRenderController,
             EditingService = NestedEditingService,
@@ -103,9 +102,11 @@ internal static class MarkdownFigureRendering
             FontFamily = renderContext.FontFamily,
             FontWeight = fontWeight,
             Foreground = CaptionForeground,
+            ThemePalette = renderContext.ThemePalette,
             TextWrapping = renderContext.TextWrapping,
             TextAlignment = TextAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Markdown = markdown
         };
     }
 
@@ -130,7 +131,6 @@ internal static class MarkdownFigureRendering
             Padding = new Thickness(12, 10),
             Child = new MarkdownTextBlock
             {
-                Markdown = markdown,
                 BaseUri = renderContext.BaseUri,
                 RenderController = NestedRenderController,
                 EditingService = NestedEditingService,
@@ -139,8 +139,10 @@ internal static class MarkdownFigureRendering
                 FontSize = renderContext.FontSize,
                 FontFamily = renderContext.FontFamily,
                 Foreground = renderContext.Foreground,
+                ThemePalette = renderContext.ThemePalette,
                 TextWrapping = renderContext.TextWrapping,
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Markdown = markdown
             }
         };
     }

@@ -64,16 +64,17 @@ internal static class MarkdownAlertRendering
 
         return new MarkdownTextBlock
         {
-            Markdown = markdown,
             BaseUri = renderContext.BaseUri,
             RenderController = NestedRenderController,
             EditingService = NestedEditingService,
             FontFamily = renderContext.FontFamily,
             FontSize = renderContext.FontSize,
             Foreground = renderContext.Foreground,
+            ThemePalette = renderContext.ThemePalette,
             TextWrapping = renderContext.TextWrapping,
             IsEditingEnabled = false,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Markdown = markdown
         };
     }
 

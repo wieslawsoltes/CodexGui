@@ -160,7 +160,6 @@ internal static class MarkdownDefinitionListRendering
     {
         return new MarkdownTextBlock
         {
-            Markdown = markdown,
             BaseUri = renderContext.BaseUri,
             RenderController = NestedRenderController,
             EditingService = NestedEditingService,
@@ -170,8 +169,10 @@ internal static class MarkdownDefinitionListRendering
             FontFamily = renderContext.FontFamily,
             FontWeight = fontWeight ?? FontWeight.Normal,
             Foreground = renderContext.Foreground,
+            ThemePalette = renderContext.ThemePalette,
             TextWrapping = renderContext.TextWrapping,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Markdown = markdown
         };
     }
 }

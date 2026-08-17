@@ -14,6 +14,12 @@ public sealed class MarkdownHitTestingService : IMarkdownHitTestingService
         ArgumentNullException.ThrowIfNull(request.Host);
         ArgumentNullException.ThrowIfNull(request.RenderResult);
 
+        if (request.Host is CodexGui.Markdown.Controls.MarkdownTextBlock markdownHost &&
+            TryHitTestSelectableSegment(markdownHost, request.Point, request.RenderResult, out var segmentMatch))
+        {
+            return segmentMatch;
+        }
+
         if (TryHitTestVisual(request.Host, request.Point, request.RenderResult.RenderMap, out var visualMatch, out var hitVisual))
         {
             return CreateVisualHitResult(request, hitVisual, visualMatch);
@@ -39,6 +45,65 @@ public sealed class MarkdownHitTestingService : IMarkdownHitTestingService
         }
 
         return HitTestTextPosition(request.RenderResult, request.TextLayout, request.Padding, textHit.TextPosition);
+    }
+
+    private static bool TryHitTestSelectableSegment(
+        CodexGui.Markdown.Controls.MarkdownTextBlock host,
+        Point hostPoint,
+        MarkdownRenderResult renderResult,
+        out MarkdownHitTestResult? result)
+    {
+        result = null;
+        if (!MarkdownDocumentSelection.TryHitTestSegment(
+                host,
+                hostPoint,
+                out var selectable,
+                out var localPoint,
+                out var segmentBounds) ||
+            selectable is not MarkdownWrappingSelectableTextBlock segment)
+        {
+            return false;
+        }
+
+        var padding = segment.Padding;
+        var textPoint = new Point(
+            Math.Clamp(
+                localPoint.X - padding.Left,
+                0,
+                Math.Max(segment.TextLayout.WidthIncludingTrailingWhitespace, 0)),
+            Math.Clamp(
+                localPoint.Y - padding.Top,
+                0,
+                Math.Max(segment.TextLayout.Height, 0)));
+        var hit = segment.TextLayout.HitTestPoint(textPoint);
+        if (!hit.IsInside ||
+            !segment.RenderMap.TryGetTextEntry(hit.TextPosition, out var entry) ||
+            entry is null ||
+            renderResult.ParseResult.ParentMap.Count > 0 &&
+            !renderResult.ParseResult.ParentMap.ContainsKey(entry.AstNode.Node))
+        {
+            return false;
+        }
+
+        var localHighlightRects = ResolveTextHighlightRects(segment.TextLayout, padding, entry);
+        result = new MarkdownHitTestResult(
+            entry.AstNode,
+            entry.ElementKind,
+            renderResult.ParseResult,
+            visual: segment,
+            highlightRects: OffsetRects(localHighlightRects, segmentBounds.TopLeft));
+        return true;
+    }
+
+    private static IReadOnlyList<Rect> OffsetRects(IReadOnlyList<Rect> rects, Point offset)
+    {
+        if (rects.Count == 0)
+            return Array.Empty<Rect>();
+
+        var offsetRects = new Rect[rects.Count];
+        for (var index = 0; index < rects.Count; index++)
+            offsetRects[index] = rects[index].Translate((Vector)offset);
+        return offsetRects;
     }
 
     public MarkdownHitTestResult? HitTestTextPosition(MarkdownRenderResult renderResult, int textPosition)

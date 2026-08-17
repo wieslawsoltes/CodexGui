@@ -14,4 +14,7 @@
     <Project Path="src/CodexGui.Markdown.Plugin.TextMate/CodexGui.Markdown.Plugin.TextMate.csproj" />
     <Project Path="src/CodexGui.Markdown.Sample/CodexGui.Markdown.Sample.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodexGui.Markdown.Tests/CodexGui.Markdown.Tests.csproj" />
+  </Folder>
 </Solution>

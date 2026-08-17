@@ -58,7 +58,7 @@ jobs:
         run: dotnet build CodexGui.slnx -c Release --no-restore
 
       - name: Test
-        run: dotnet test CodexGui.slnx -c Release --no-build --logger trx --results-directory artifacts/test
+        run: dotnet test CodexGui.slnx -c Release --no-build --report-xunit-trx --results-directory artifacts/test
 
       - name: Upload test results
         uses: actions/upload-artifact@v4

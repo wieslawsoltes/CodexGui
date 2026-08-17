@@ -169,6 +169,9 @@ public sealed class MarkdownRenderContext
 
     public required TextWrapping TextWrapping { get; init; }
 
+    /// <summary>Gets the semantic palette used to theme rendered Markdown content.</summary>
+    public MarkdownThemePalette? ThemePalette { get; init; }
+
     public required double AvailableWidth { get; init; }
 
     public required int RenderGeneration { get; init; }
@@ -946,6 +949,12 @@ internal static class MarkdownRenderedElementMetadata
     private static readonly AttachedProperty<MarkdownVisualHitTestHandler?> VisualHitTestHandlerProperty =
         AvaloniaProperty.RegisterAttached<MarkdownRenderedElementMetadataHost, AvaloniaObject, MarkdownVisualHitTestHandler?>(
             "VisualHitTestHandler");
+    private static readonly AttachedProperty<bool> IsTextAdornmentProperty =
+        AvaloniaProperty.RegisterAttached<MarkdownRenderedElementMetadataHost, AvaloniaObject, bool>(
+            "IsTextAdornment");
+    private static readonly AttachedProperty<bool> StretchesToDocumentWidthProperty =
+        AvaloniaProperty.RegisterAttached<MarkdownRenderedElementMetadataHost, AvaloniaObject, bool>(
+            "StretchesToDocumentWidth");
 
     public static void SetElementInfo(AvaloniaObject target, MarkdownRenderedElementInfo? elementInfo)
     {
@@ -969,6 +978,30 @@ internal static class MarkdownRenderedElementMetadata
     {
         ArgumentNullException.ThrowIfNull(target);
         return target.GetValue(VisualHitTestHandlerProperty);
+    }
+
+    public static void SetIsTextAdornment(AvaloniaObject target, bool value)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        target.SetValue(IsTextAdornmentProperty, value);
+    }
+
+    public static bool GetIsTextAdornment(AvaloniaObject target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        return target.GetValue(IsTextAdornmentProperty);
+    }
+
+    public static void SetStretchesToDocumentWidth(AvaloniaObject target, bool value)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        target.SetValue(StretchesToDocumentWidthProperty, value);
+    }
+
+    public static bool GetStretchesToDocumentWidth(AvaloniaObject target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        return target.GetValue(StretchesToDocumentWidthProperty);
     }
 
     public static MarkdownRenderedElementInfo? CreateElementInfo(MarkdownObject? markdownObject, MarkdownRenderedElementKind kind)

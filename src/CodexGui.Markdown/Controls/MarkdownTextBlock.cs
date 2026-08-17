@@ -6,7 +6,9 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using CodexGui.Markdown.Services;
+using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
+using System.Windows.Input;
 
 namespace CodexGui.Markdown.Controls;
 
@@ -26,8 +28,21 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
             nameof(EditorPresentationMode),
             defaultValue: MarkdownEditorPresentationMode.Inline);
 
+    /// <summary>Identifies the <see cref="ThemePalette"/> property.</summary>
+    public static readonly StyledProperty<MarkdownThemePalette?> ThemePaletteProperty =
+        AvaloniaProperty.Register<MarkdownTextBlock, MarkdownThemePalette?>(nameof(ThemePalette));
+
+    /// <summary>Identifies the <see cref="IsTaskListInteractive"/> property.</summary>
+    public static readonly StyledProperty<bool> IsTaskListInteractiveProperty =
+        AvaloniaProperty.Register<MarkdownTextBlock, bool>(nameof(IsTaskListInteractive));
+
+    /// <summary>Identifies the <see cref="TaskListToggleCommand"/> property.</summary>
+    public static readonly StyledProperty<ICommand?> TaskListToggleCommandProperty =
+        AvaloniaProperty.Register<MarkdownTextBlock, ICommand?>(nameof(TaskListToggleCommand));
+
     private const double LinkClickDragThreshold = 4d;
     private static readonly Cursor LinkCursor = new(StandardCursorType.Hand);
+    private readonly TaskListToggleForwardingCommandImpl _taskListToggleForwardingCommand;
     private IMarkdownRenderController _renderController = MarkdownRenderingServices.DefaultController;
     private IMarkdownHitTestingService _hitTestingService = MarkdownRenderingServices.DefaultHitTestingService;
     private IMarkdownEditingService _editingService = MarkdownRenderingServices.DefaultEditingService;
@@ -40,16 +55,22 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
     private double _effectiveViewportWidth = double.NaN;
     private Point? _pendingLinkPointerOrigin;
     private Uri? _pendingLinkUri;
+    private bool _isAttachedToVisualTree;
 
     static MarkdownTextBlock()
     {
+        BackgroundProperty.OverrideDefaultValue<MarkdownTextBlock>(Brushes.Transparent);
         MarkdownProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.HandleMarkdownChanged());
         BaseUriProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.RebuildMarkdown());
         IsEditingEnabledProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.HandleEditingEnabledChanged());
         EditorPresentationModeProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.RebuildMarkdown());
+        FontFamilyProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.RebuildMarkdown());
         FontSizeProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.RebuildMarkdown());
         ForegroundProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.RebuildMarkdown());
         TextWrappingProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.RebuildMarkdown());
+        ThemePaletteProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.RebuildMarkdown());
+        IsTaskListInteractiveProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.ConfigureTaskListCheckBoxes());
+        TaskListToggleCommandProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.HandleTaskListToggleCommandChanged());
         BoundsProperty.Changed.AddClassHandler<MarkdownTextBlock>((control, _) => control.HandleBoundsChanged());
     }
 
@@ -75,6 +96,27 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
     {
         get => GetValue(EditorPresentationModeProperty);
         set => SetValue(EditorPresentationModeProperty, value);
+    }
+
+    /// <summary>Gets or sets the semantic palette used by the rendered Markdown document.</summary>
+    public MarkdownThemePalette? ThemePalette
+    {
+        get => GetValue(ThemePaletteProperty);
+        set => SetValue(ThemePaletteProperty, value);
+    }
+
+    /// <summary>Gets or sets whether task-list checkboxes accept pointer and keyboard input.</summary>
+    public bool IsTaskListInteractive
+    {
+        get => GetValue(IsTaskListInteractiveProperty);
+        set => SetValue(IsTaskListInteractiveProperty, value);
+    }
+
+    /// <summary>Gets or sets the command invoked with a <see cref="MarkdownTaskListToggleRequest"/> after a task checkbox changes.</summary>
+    public ICommand? TaskListToggleCommand
+    {
+        get => GetValue(TaskListToggleCommandProperty);
+        set => SetValue(TaskListToggleCommandProperty, value);
     }
 
     public IMarkdownRenderController RenderController
@@ -144,6 +186,9 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
 
     public MarkdownTextBlock()
     {
+        _taskListToggleForwardingCommand = new TaskListToggleForwardingCommandImpl(this);
+        MarkdownDocumentSelection.SetEnabled(this, true);
+        MarkdownDocumentLayout.SetEnabled(this, true);
         AttachedToVisualTree += OnAttachedToVisualTree;
         DetachedFromVisualTree += OnDetachedFromVisualTree;
         EffectiveViewportChanged += OnEffectiveViewportChanged;
@@ -152,11 +197,16 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
 
     private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs eventArgs)
     {
+        _isAttachedToVisualTree = true;
+        _taskListToggleForwardingCommand.SetSource(TaskListToggleCommand);
         RebuildMarkdown();
     }
 
     private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs eventArgs)
     {
+        _isAttachedToVisualTree = false;
+        _renderGeneration = unchecked(_renderGeneration + 1);
+        _taskListToggleForwardingCommand.SetSource(null);
         _effectiveViewportWidth = double.NaN;
         _lastRenderResult = null;
         _activeEditorSession = null;
@@ -189,6 +239,7 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
 
     private void HandleBoundsChanged()
     {
+        MarkdownDocumentSelection.InvalidateLayout(this);
         if (Bounds.Width <= 0 && ResolveViewportWidth() <= 0)
         {
             return;
@@ -319,7 +370,6 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
         {
             _lastMeasuredWidth = width;
             InvalidateMeasure();
-            RebuildMarkdown();
         }
     }
 
@@ -356,18 +406,23 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
             return false;
         }
 
-        switch (hitTestResult.AstNode.Node)
+        for (MarkdownObject? current = hitTestResult.AstNode.Node;
+             current is not null;
+             hitTestResult.ParseResult.TryGetParent(current, out current))
         {
-            case LinkInline { IsImage: false } linkInline:
+            switch (current)
+            {
+                case LinkInline { IsImage: false } linkInline:
                 return MarkdownUriUtilities.TryResolveUri(BaseUri, linkInline.GetDynamicUrl?.Invoke() ?? linkInline.Url, out navigateUri);
-            case AutolinkInline autolinkInline:
-                var navigateUrl = autolinkInline.IsEmail
-                    ? $"mailto:{autolinkInline.Url}"
-                    : autolinkInline.Url;
-                return MarkdownUriUtilities.TryResolveUri(BaseUri, navigateUrl, out navigateUri);
-            default:
-                return false;
+                case AutolinkInline autolinkInline:
+                    var navigateUrl = autolinkInline.IsEmail
+                        ? $"mailto:{autolinkInline.Url}"
+                        : autolinkInline.Url;
+                    return MarkdownUriUtilities.TryResolveUri(BaseUri, navigateUrl, out navigateUri);
+            }
         }
+
+        return false;
     }
 
     private Task LaunchUriAsync(Uri navigateUri)
@@ -406,6 +461,8 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
             Text = string.Empty;
             Inlines = _lastRenderResult.Inlines;
             previousResources?.Dispose();
+            MarkdownDocumentLayout.Refresh(this);
+            MarkdownDocumentSelection.Reset(this);
             return;
         }
 
@@ -419,6 +476,7 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
                 FontFamily = FontFamily,
                 Foreground = Foreground,
                 TextWrapping = TextWrapping,
+                ThemePalette = ThemePalette ?? MarkdownThemePalette.Resolve(Foreground),
                 AvailableWidth = ResolveAvailableWidth(),
                 RenderGeneration = renderGeneration,
                 ResourceTracker = resourceTracker,
@@ -427,12 +485,50 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
             }
         };
 
-        var result = RenderController.Render(request);
+        MarkdownRenderResult result;
+        try
+        {
+            result = RenderController.Render(request);
+        }
+        catch
+        {
+            resourceTracker.Dispose();
+            throw;
+        }
+
+        if (!ReferenceEquals(result.ResourceTracker, resourceTracker))
+            resourceTracker.Dispose();
+
         _lastRenderResult = result;
-        Inlines = result.Inlines;
         Text = null;
+        Inlines = result.Inlines;
         _renderResources = result.ResourceTracker;
         previousResources?.Dispose();
+        ConfigureTaskListCheckBoxes();
+        MarkdownDocumentLayout.Refresh(this);
+        MarkdownDocumentSelection.Reset(this);
+    }
+
+    internal void ConfigureTaskListCheckBox(CheckBox checkBox)
+    {
+        var interactive = IsTaskListInteractive && TaskListToggleCommand is not null;
+        MarkdownTaskListNormalizer.SetInteractive(checkBox, interactive);
+        checkBox.Focusable = interactive;
+        checkBox.IsHitTestVisible = interactive;
+        checkBox.Command = interactive ? _taskListToggleForwardingCommand : null;
+        checkBox.CommandParameter = interactive ? checkBox : null;
+    }
+
+    private void HandleTaskListToggleCommandChanged()
+    {
+        _taskListToggleForwardingCommand.SetSource(_isAttachedToVisualTree ? TaskListToggleCommand : null);
+        ConfigureTaskListCheckBoxes();
+    }
+
+    private void ConfigureTaskListCheckBoxes()
+    {
+        foreach (var checkBox in MarkdownTaskListNormalizer.EnumerateCheckBoxes(Inlines))
+            ConfigureTaskListCheckBox(checkBox);
     }
 
     public MarkdownHitTestResult? HitTestMarkdown(Point point)
@@ -638,16 +734,16 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
     {
         if (!double.IsInfinity(availableWidth) && availableWidth > 0)
         {
-            return Math.Max(availableWidth, 160);
+            return Math.Max(availableWidth, 1);
         }
 
         var viewportWidth = ResolveViewportWidth();
         if (viewportWidth > 0)
         {
-            return Math.Max(viewportWidth, 160);
+            return Math.Max(viewportWidth, 1);
         }
 
-        return Bounds.Width > 0 ? Math.Max(Bounds.Width, 160) : 640;
+        return Bounds.Width > 0 ? Math.Max(Bounds.Width, 1) : 640;
     }
 
     private double ResolveViewportWidth()
@@ -664,6 +760,68 @@ public sealed class MarkdownTextBlock : SelectableTextBlock
     {
         _renderResources?.Dispose();
         _renderResources = null;
+    }
+
+    private sealed class TaskListToggleForwardingCommandImpl(MarkdownTextBlock owner) : ICommand
+    {
+        private ICommand? _source;
+
+        public event EventHandler? CanExecuteChanged;
+
+        public bool CanExecute(object? parameter)
+        {
+            if (parameter is not CheckBox checkBox ||
+                !MarkdownTaskListNormalizer.IsInteractive(checkBox) ||
+                _source is not { } source ||
+                !MarkdownTaskListNormalizer.TryCreateToggleRequest(
+                    owner.Markdown ?? string.Empty,
+                    checkBox,
+                    out var request,
+                    checkBox.IsChecked != true))
+            {
+                return false;
+            }
+
+            return source.CanExecute(request);
+        }
+
+        public void SetSource(ICommand? source)
+        {
+            if (ReferenceEquals(_source, source))
+                return;
+
+            if (_source is not null)
+                _source.CanExecuteChanged -= OnSourceCanExecuteChanged;
+
+            _source = source;
+
+            if (_source is not null)
+                _source.CanExecuteChanged += OnSourceCanExecuteChanged;
+
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void Execute(object? parameter)
+        {
+            if (parameter is not CheckBox checkBox ||
+                _source is not { } source ||
+                !MarkdownTaskListNormalizer.TryCreateToggleRequest(
+                    owner.Markdown ?? string.Empty,
+                    checkBox,
+                    out var request) ||
+                !source.CanExecute(request))
+            {
+                if (parameter is CheckBox failed)
+                    failed.IsChecked = failed.IsChecked != true;
+                return;
+            }
+
+            source.Execute(request);
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void OnSourceCanExecuteChanged(object? sender, EventArgs args) =>
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 }
 

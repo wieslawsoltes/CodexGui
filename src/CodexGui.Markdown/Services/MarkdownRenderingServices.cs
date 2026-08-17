@@ -47,6 +47,7 @@ public static class MarkdownRenderingServices
     {
         var registry = new MarkdownPluginRegistry();
         MarkdownBuiltInEditorPlugins.Register(registry);
+        registry.AddPlugin(new ThematicBreakMarkdownPlugin());
 
         foreach (var plugin in plugins ?? [])
         {
